@@ -212,8 +212,18 @@ function App() {
       }
 
       const generatedWords = await resp.json();
-      const newTopic = { id: Date.now(), title: topicName, words: generatedWords, isCustom: true };
-      setCustomTopics(prev => [...prev, newTopic]);
+      const newTopic = {
+        id: Date.now(),
+        title: topicName,
+        words: generatedWords,
+        isCustom: true,
+        createdDate: new Date().toISOString()
+      };
+
+      const updatedTopics = [...customTopics, newTopic];
+      setCustomTopics(updatedTopics);
+      localStorage.setItem('customTopics', JSON.stringify(updatedTopics));
+
       setView('dashboard');
     } catch (error) {
       console.error(error);
@@ -338,7 +348,10 @@ function App() {
                     <h3 style={{ color: '#fff', textShadow: '0 2px 5px rgba(0,0,0,0.3)', fontWeight: '900' }}>
                       {topic.title === 'Work' ? 'Trabajo' : topic.title === 'Environment' ? 'Medio Ambiente' : topic.title === 'Philosophy & Ethics' ? 'Filosofía' : topic.title}
                     </h3>
-                    <div className="stat" style={{ color: '#fff', opacity: 0.7, fontWeight: '700' }}>{topic.words.length} TARJETAS</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="stat" style={{ color: '#fff', opacity: 0.7, fontWeight: '700' }}>{topic.words.length} TARJETAS</div>
+                      {topic.isCustom && <div className="badge-pill" style={{ fontSize: '9px', padding: '2px 8px', background: 'rgba(189, 106, 240, 0.2)', color: '#bd6af0', border: '1px solid rgba(189, 106, 240, 0.3)' }}>IA</div>}
+                    </div>
                   </motion.div>
                 ))}
 
