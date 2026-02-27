@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './index.css';
 import Quiz from './Quiz';
 import Flashcards from './Flashcards';
@@ -6,6 +7,13 @@ import GrammarGame from './GrammarGame';
 import LanguageSelector from './LanguageSelector';
 import GrammarSummary from './GrammarSummary';
 import { languages, levels, defaultContent } from './content';
+
+// Variantes de animación profesional
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
+};
 
 function ProfileView({ xp, streak, onExit }) {
   return (
@@ -148,12 +156,12 @@ function SuggestModal({ onCancel, onSuggest }) {
 }
 
 function App() {
-  const [language, setLanguage] = useState('en');
-  const [level, setLevel] = useState('B1');
-  const [xp, setXp] = useState(420);
-  const [streak, setStreak] = useState(15);
+  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+  const [level, setLevel] = useState(() => localStorage.getItem('level') || 'B1');
+  const [xp, setXp] = useState(() => parseInt(localStorage.getItem('xp')) || 420);
+  const [streak, setStreak] = useState(() => parseInt(localStorage.getItem('streak')) || 15);
   const [searchTerm, setSearchTerm] = useState('');
-  const [view, setView] = useState('welcome');
+  const [view, setView] = useState(() => localStorage.getItem('view') || 'welcome');
   const [selectedWords, setSelectedWords] = useState([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [customTopics, setCustomTopics] = useState(() => {
@@ -164,7 +172,12 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('customTopics', JSON.stringify(customTopics));
-  }, [customTopics]);
+    localStorage.setItem('xp', xp);
+    localStorage.setItem('streak', streak);
+    localStorage.setItem('language', language);
+    localStorage.setItem('level', level);
+    localStorage.setItem('view', view);
+  }, [customTopics, xp, streak, language, level, view]);
 
   const addXP = (earned) => setXp(prev => Math.min(prev + earned, 500));
   const startTopic = (topic) => { setSelectedWords(topic.words); setView('flashcards'); };
@@ -231,126 +244,134 @@ function App() {
     return () => clearInterval(interval);
   }, [view]);
 
-  if (view === 'welcome') return <WelcomeScreen onStart={handleStart} />;
-  if (view === 'quiz') return <Quiz onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
-  if (view === 'flashcards') return <Flashcards words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
-  if (view === 'grammar') return <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />;
-  if (view === 'grammar-summary') return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} />;
-  if (view === 'profile') return <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />;
-
-  if (view === 'generating') {
-    return (
-      <>
-        <div className="mesh-container">
-          <div className="orb orb-1"></div>
-          <div className="orb orb-2"></div>
-          <div className="orb orb-3"></div>
-        </div>
-        <div className="dashboard-container reveal" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', textAlign: 'center' }}>
-          <div className="glass-card" style={{ padding: '50px', borderRadius: '40px', border: '2px solid rgba(0,229,255,0.3)', background: 'rgba(0,0,0,0.4)' }}>
-            <div style={{ fontSize: '80px', marginBottom: '30px' }}>🧠</div>
-            <h2 style={{ fontSize: '32px', fontWeight: '900', margin: '0 0 10px 0', color: '#fff' }}>IA Generando...</h2>
-            <p style={{ opacity: 0.9, color: '#00e5ff', fontSize: '18px', fontWeight: '800', height: '24px' }}>{genMessages[genMessageIdx]}</p>
-            <p style={{ opacity: 0.6, color: '#fff', fontSize: '14px', marginTop: '10px' }}>Tema: "{generatingTopicName}"</p>
-            <div className="progress-track" style={{ marginTop: '30px', width: '240px', height: '6px' }}>
-              <div className="progress-fill" style={{ width: `${(genMessageIdx + 1) * 20}%`, transition: 'width 0.5s ease' }}></div>
+  // Contenido dinámico para las vistas
+  const renderContent = () => {
+    switch (view) {
+      case 'welcome': return <WelcomeScreen onStart={handleStart} />;
+      case 'quiz': return <Quiz onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
+      case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
+      case 'grammar': return <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />;
+      case 'grammar-summary': return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} />;
+      case 'profile': return <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />;
+      case 'generating': return (
+        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
+          <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
+          <div className="dashboard-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', textAlign: 'center' }}>
+            <div className="glass-card" style={{ padding: '50px', borderRadius: '40px', border: '2px solid rgba(0,242,255,0.3)', background: 'rgba(0,0,0,0.4)' }}>
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} style={{ fontSize: '80px', marginBottom: '30px' }}>🧠</motion.div>
+              <h2 style={{ fontSize: '32px', fontWeight: '900', margin: '0 0 10px 0', color: '#fff' }}>IA Generando...</h2>
+              <p style={{ opacity: 0.9, color: '#00f2ff', fontSize: '18px', fontWeight: '800', height: '24px' }}>{genMessages[genMessageIdx]}</p>
+              <p style={{ opacity: 0.6, color: '#fff', fontSize: '14px', marginTop: '10px' }}>Tema: "{generatingTopicName}"</p>
+              <div className="progress-track" style={{ marginTop: '30px', width: '240px', height: '6px' }}>
+                <motion.div className="progress-fill" style={{ width: `${(genMessageIdx + 1) * 20}%` }} transition={{ duration: 0.5 }}></motion.div>
+              </div>
             </div>
           </div>
-        </div>
-      </>
-    );
-  }
+        </motion.div>
+      );
+      case 'dashboard':
+      default:
+        const filteredTopics = [...(defaultContent[language]?.[level]?.topics || []), ...customTopics]
+          .filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const filteredTopics = [...(defaultContent[language]?.[level]?.topics || []), ...customTopics]
-    .filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
+        return (
+          <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
+            <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
+            <div className="dashboard-container">
+              <header className="header">
+                <h1 className="user-name">Alex Rivers</h1>
+                <div className="badge-pill" style={{ background: 'rgba(0, 242, 255, 0.15)', color: '#00f2ff' }}>{level} • {currentFlag}</div>
+              </header>
+
+              <motion.div whileHover={{ scale: 1.05 }} className="streak-pill" style={{ background: 'rgba(255, 255, 255, 0.08)' }}>
+                <span style={{ fontSize: '24px' }}>🔥</span>
+                <span style={{ fontWeight: '800', fontSize: '18px', color: '#fff' }}>{streak} DÍAS DE RACHA</span>
+              </motion.div>
+
+              <motion.section whileHover={{ y: -5 }} className="glass-card masterclass-hero" onClick={() => setView('grammar-summary')} style={{ background: 'rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '900', letterSpacing: '2px', color: '#00f2ff', marginBottom: '8px' }}>CURSO MAGISTRAL</div>
+                    <h2 style={{ fontSize: '28px', fontWeight: '900', margin: 0, lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)', color: '#fff' }}>Gramática<br />Pro Nivel {level}</h2>
+                  </div>
+                  <div style={{ fontSize: '50px' }}>💎</div>
+                </div>
+                <p style={{ fontSize: '14px', opacity: 0.9, marginTop: '15px', fontWeight: '500', color: '#fff' }}>Domina el idioma con lecciones bilingües diseñadas para expertos.</p>
+              </motion.section>
+
+              <section className="progress-container">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontWeight: '800', fontSize: '14px', color: '#fff' }}>OBJETIVO DIARIO</span>
+                  <span style={{ opacity: 0.8, fontSize: '14px', fontWeight: '800', color: '#fff' }}>{xp} / 500 XP</span>
+                </div>
+                <div className="progress-track" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${(xp / 500) * 100}%` }} className="progress-fill"></motion.div>
+                </div>
+              </section>
+
+              <div className="search-container">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Buscar por tema..."
+                  value={searchTerm}
+                  style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#fff' }}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div className="luxury-grid">
+                {filteredTopics.map((topic, i) => (
+                  <motion.div
+                    key={topic.id}
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="glass-card luxury-card"
+                    onClick={() => startTopic(topic)}
+                    style={{ background: 'rgba(255,255,255,0.08)', cursor: 'pointer' }}
+                  >
+                    <div className="icon">
+                      {topic.title.match(/Work|Arbeit/i) ? '💼' :
+                        topic.title.match(/Env|Umw/i) ? '🌍' :
+                          topic.title.match(/Phi/i) ? '⚖️' : '📚'}
+                    </div>
+                    <h3 style={{ color: '#fff', textShadow: '0 2px 5px rgba(0,0,0,0.3)', fontWeight: '900' }}>
+                      {topic.title === 'Work' ? 'Trabajo' : topic.title === 'Environment' ? 'Medio Ambiente' : topic.title === 'Philosophy & Ethics' ? 'Filosofía' : topic.title}
+                    </h3>
+                    <div className="stat" style={{ color: '#fff', opacity: 0.7, fontWeight: '700' }}>{topic.words.length} TARJETAS</div>
+                  </motion.div>
+                ))}
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  className="glass-card luxury-card"
+                  onClick={() => setIsSuggesting(true)}
+                  style={{ opacity: 0.7, borderStyle: 'dashed', cursor: 'pointer', background: 'rgba(255,255,255,0.03)' }}
+                >
+                  <div className="icon">➕</div>
+                  <h3 style={{ color: '#fff', fontWeight: '900' }}>Proponer Tema</h3>
+                </motion.div>
+              </div>
+
+              <div style={{ height: '140px' }}></div>
+
+              <nav className="tab-bar">
+                <button className={`tab-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
+                <button className={`tab-btn ${view === 'quiz' ? 'active' : ''}`} onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
+                <button className={`tab-btn ${view === 'grammar' ? 'active' : ''}`} onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
+                <button className={`tab-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
+              </nav>
+            </div>
+          </motion.div>
+        );
+    }
+  };
 
   return (
-    <>
-      <div className="mesh-container">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
-      </div>
-
-      {isSuggesting && <SuggestModal onCancel={() => setIsSuggesting(false)} onSuggest={handleSuggest} />}
-
-      <div className="dashboard-container">
-        <header className="header reveal">
-          <h1 className="user-name">Alex Rivers</h1>
-          <div className="badge-pill" style={{ background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff' }}>{level} • {currentFlag}</div>
-        </header>
-
-        <div className="streak-pill reveal" style={{ animationDelay: '0.1s', background: 'rgba(255, 255, 255, 0.1)' }}>
-          <span style={{ fontSize: '24px' }}>🔥</span>
-          <span style={{ fontWeight: '800', fontSize: '18px', color: '#fff' }}>{streak} DÍAS DE RACHA</span>
-        </div>
-
-        <section className="glass-card masterclass-hero reveal" onClick={() => setView('grammar-summary')} style={{ animationDelay: '0.2s', background: 'rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ fontSize: '10px', fontWeight: '900', letterSpacing: '2px', color: '#00e5ff', marginBottom: '8px' }}>CURSO MAGISTRAL</div>
-              <h2 style={{ fontSize: '28px', fontWeight: '900', margin: 0, lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)', color: '#fff' }}>Gramática<br />Pro Nivel {level}</h2>
-            </div>
-            <div style={{ fontSize: '50px' }}>💎</div>
-          </div>
-          <p style={{ fontSize: '14px', opacity: 0.9, marginTop: '15px', fontWeight: '500', color: '#fff' }}>Domina el idioma con lecciones bilingües diseñadas para expertos.</p>
-        </section>
-
-        <section className="progress-container reveal" style={{ animationDelay: '0.3s' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontWeight: '800', fontSize: '14px', color: '#fff' }}>OBJETIVO DIARIO</span>
-            <span style={{ opacity: 0.8, fontSize: '14px', fontWeight: '800', color: '#fff' }}>{xp} / 500 XP</span>
-          </div>
-          <div className="progress-track" style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
-            <div className="progress-fill" style={{ width: `${(xp / 500) * 100}%` }}></div>
-          </div>
-        </section>
-
-        <div className="search-container reveal" style={{ animationDelay: '0.4s' }}>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Buscar por tema..."
-            value={searchTerm}
-            style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#fff' }}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="luxury-grid">
-          {filteredTopics.map((topic, i) => (
-            <div
-              key={topic.id}
-              className="glass-card luxury-card reveal"
-              onClick={() => startTopic(topic)}
-              style={{ animationDelay: `${0.5 + (i * 0.1)}s`, background: 'rgba(255,255,255,0.1)' }}
-            >
-              <div className="icon">
-                {topic.title.match(/Work|Arbeit/i) ? '💼' :
-                  topic.title.match(/Env|Umw/i) ? '🌍' :
-                    topic.title.match(/Phi/i) ? '⚖️' : '📚'}
-              </div>
-              <h3 style={{ color: '#fff', textShadow: '0 2px 5px rgba(0,0,0,0.3)', fontWeight: '900' }}>{topic.title === 'Work' ? 'Trabajo' : topic.title === 'Environment' ? 'Medio Ambiente' : topic.title === 'Philosophy & Ethics' ? 'Filosofía' : topic.title}</h3>
-              <div className="stat" style={{ color: '#fff', opacity: 0.7, fontWeight: '700' }}>{topic.words.length} TARJETAS</div>
-            </div>
-          ))}
-
-          <div className="glass-card luxury-card reveal" onClick={() => setIsSuggesting(true)} style={{ opacity: 0.8, borderStyle: 'dashed', animationDelay: '0.8s', cursor: 'pointer', background: 'rgba(255,255,255,0.05)' }}>
-            <div className="icon">➕</div>
-            <h3 style={{ color: '#fff', fontWeight: '900' }}>Proponer Tema</h3>
-          </div>
-        </div>
-
-        <div style={{ height: '140px' }}></div>
-
-        <nav className="tab-bar reveal" style={{ animationDelay: '0.9s' }}>
-          <button className={`tab-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
-          <button className={`tab-btn ${view === 'quiz' ? 'active' : ''}`} onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
-          <button className={`tab-btn ${view === 'grammar' ? 'active' : ''}`} onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
-          <button className={`tab-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
-        </nav>
-      </div>
-    </>
+    <AnimatePresence mode="wait">
+      {isSuggesting && <SuggestModal key="suggest" onCancel={() => setIsSuggesting(false)} onSuggest={handleSuggest} />}
+      {renderContent()}
+    </AnimatePresence>
   );
 }
 

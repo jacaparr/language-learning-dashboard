@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
 
 :root {
-  --primary: #00e5ff;
-  --primary-glow: rgba(0, 229, 255, 0.4);
-  --accent: #b056e0;
-  --accent-glow: rgba(176, 86, 224, 0.4);
-  --bg-deep: #02040a;
-  --glass-bg: rgba(255, 255, 255, 0.07);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --satin-border: rgba(255, 255, 255, 0.25);
+  --primary: #00f2ff;
+  --primary-glow: rgba(0, 242, 255, 0.4);
+  --accent: #bd6af0;
+  --accent-glow: rgba(189, 106, 240, 0.4);
+  --bg-deep: #05070a;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --satin-border: rgba(255, 255, 255, 0.3);
   --text-main: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.75);
+  --text-dim: rgba(255, 255, 255, 0.7);
   --font-main: 'Outfit', sans-serif;
-  --card-radius: 32px;
+  --card-radius: 28px;
 }
 
 * {
@@ -134,19 +134,21 @@ body::before {
   text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Physical Glass Cards */
+/* Physical Glass Cards with 3D effect */
 .glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(50px);
-  -webkit-backdrop-filter: blur(50px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border: 1px solid var(--glass-border);
   border-radius: var(--card-radius);
   padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
   color: #fff;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
 .glass-card::before {
@@ -156,14 +158,17 @@ body::before {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  opacity: 0.5;
 }
 
 .glass-card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-12px) rotateX(4deg) rotateY(-2deg);
   border-color: var(--satin-border);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 60px rgba(0, 210, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 20px var(--primary-glow);
 }
 
 /* Hero Elements */
