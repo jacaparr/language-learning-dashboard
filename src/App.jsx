@@ -6,6 +6,7 @@ import Flashcards from './Flashcards';
 import GrammarGame from './GrammarGame';
 import LanguageSelector from './LanguageSelector';
 import GrammarSummary from './GrammarSummary';
+import WordMatchGame from './WordMatchGame';
 import { languages, levels, defaultContent } from './content';
 
 // Variantes de animación profesional
@@ -181,6 +182,7 @@ function App() {
 
   const addXP = (earned) => setXp(prev => Math.min(prev + earned, 500));
   const startTopic = (topic) => { setSelectedWords(topic.words); setView('flashcards'); };
+  const startMatchGame = (topic) => { setSelectedWords(topic.words); setView('match'); };
   const currentFlag = languages.find(l => l.id === language)?.flag || '🇬🇧';
 
   const handleStart = (lang, lvl) => {
@@ -269,8 +271,9 @@ function App() {
       case 'welcome': return <WelcomeScreen onStart={handleStart} />;
       case 'quiz': return <Quiz onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
       case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
+      case 'match': return <WordMatchGame words={selectedWords} onExit={() => setView('dashboard')} onAddXP={addXP} />;
       case 'grammar': return <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />;
-      case 'grammar-summary': return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} />;
+      case 'grammar-summary': return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} onPractice={() => setView('grammar')} />;
       case 'profile': return <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />;
       case 'generating': return (
         <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
@@ -357,9 +360,17 @@ function App() {
                     <h3 style={{ color: '#fff', textShadow: '0 2px 5px rgba(0,0,0,0.3)', fontWeight: '900' }}>
                       {topic.title === 'Work' ? 'Trabajo' : topic.title === 'Environment' ? 'Medio Ambiente' : topic.title === 'Philosophy & Ethics' ? 'Filosofía' : topic.title}
                     </h3>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div className="stat" style={{ color: '#fff', opacity: 0.7, fontWeight: '700' }}>{topic.words.length} TARJETAS</div>
-                      {topic.isCustom && <div className="badge-pill" style={{ fontSize: '9px', padding: '2px 8px', background: 'rgba(189, 106, 240, 0.2)', color: '#bd6af0', border: '1px solid rgba(189, 106, 240, 0.3)' }}>IA</div>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); startTopic(topic); }}
+                        className="glass-card"
+                        style={{ padding: '8px 12px', fontSize: '10px', margin: 0, background: 'rgba(255,255,255,0.1)' }}
+                      >📇 REPASAR</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); startMatchGame(topic); }}
+                        className="premium-btn"
+                        style={{ padding: '8px 12px', fontSize: '10px', margin: 0, background: '#fff', color: '#000' }}
+                      >🎮 JUGAR</button>
                     </div>
                   </motion.div>
                 ))}

@@ -330,6 +330,14 @@ function GrammarSummary({ language, level, onExit }) {
                                 <p style={{ fontSize: '13px', margin: 0, fontStyle: 'italic', color: '#fff', fontWeight: '600' }}>{lesson.mistake}</p>
                                 <p style={{ fontSize: '12px', opacity: 0.9, marginTop: '5px', color: '#ff7f7f', fontStyle: 'italic' }}>{lesson.mistakeEs}</p>
                             </div>
+
+                            <button
+                                onClick={() => onPractice && onPractice(lesson)}
+                                className="premium-btn"
+                                style={{ marginTop: '20px', width: '100%', background: '#fff', color: '#000', fontSize: '13px', padding: '15px' }}
+                            >
+                                🎯 PRACTICAR ESTE TEMA
+                            </button>
                         </div>
                     ))}
                 </div>
