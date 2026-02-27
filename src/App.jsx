@@ -211,11 +211,20 @@ function App() {
         throw new Error(errorData.error || errorData.details || 'Error al generar contenido');
       }
 
-      const generatedWords = await resp.json();
+      const data = await resp.json();
+
+      // Sanitización profunda para evitar "term 1", "1.", etc.
+      const sanitizedWords = data.map(item => ({
+        ...item,
+        word: item.word.replace(/^\d+[\.\)]\s*/, '').replace(/\s*term\s*\d+/i, '').trim(),
+        translation: item.translation.trim(),
+        example: item.example.trim()
+      })).filter(item => item.word.length > 0);
+
       const newTopic = {
         id: Date.now(),
         title: topicName,
-        words: generatedWords,
+        words: sanitizedWords,
         isCustom: true,
         createdDate: new Date().toISOString()
       };
