@@ -16,7 +16,24 @@ app.use(cors());
 app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+const model = genAI.getGenerativeModel({
+    model: "gemini-flash-latest",
+    generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    word: { type: "string" },
+                    translation: { type: "string" },
+                    example: { type: "string" }
+                },
+                required: ["word", "translation", "example"]
+            }
+        }
+    }
+});
 
 app.post('/api/generate', async (req, res) => {
     const { topic, language, level } = req.body;
@@ -28,26 +45,26 @@ app.post('/api/generate', async (req, res) => {
     }
 
     const prompt = `
-    Generate a list of vocabulary words for a language learning app.
+    Generate a list of exactly ${level === 'B1' ? 15 : level === 'B2' ? 20 : 25} vocabulary words/phrases for a language learning app.
+    
     Topic: ${topic}
     Target Language: ${language === 'en' ? 'English' : 'German'}
     Level: ${level} (CEFR)
-    Translate the words and examples to Spanish.
     
-    Return ONLY a JSON array of objects with the following format:
-    [
-      {"word": "Word", "translation": "Traduccion", "example": "Example sentence"}
-    ]
+    Requirements:
+    1. word: The actual vocabulary word or phrase in the target language. Do NOT include numbers, indices, or topic names (e.g., use "Subway" instead of "Subway term 1").
+    2. translation: Accurate Spanish translation of the word.
+    3. example: A short, natural example sentence in the target language (${language === 'en' ? 'English' : 'German'}).
     
-    Generate exactly ${level === 'B1' ? 15 : level === 'B2' ? 20 : 25} items.
-    Do not include any markdown formatting.
-  `;
+    Ensure all content is appropriate for ${level} level.
+    `;
 
     try {
         const result = await model.generateContent(prompt);
         const text = result.response.text();
-        const jsonMatch = text.match(/\[[\s\S]*\]/);
-        const words = JSON.parse(jsonMatch[0]);
+
+        // With JSON mode, the text is a valid JSON string already
+        const words = JSON.parse(text);
         res.json(words);
     } catch (error) {
         console.error(error);
