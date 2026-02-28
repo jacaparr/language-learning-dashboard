@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-function WordMatchGame({ words, onExit, onAddXP }) {
+function WordMatchGame({ words, language = 'en', onExit, onAddXP }) {
     const [cards, setCards] = useState([]);
     const [selected, setSelected] = useState([]);
     const [matched, setMatched] = useState([]);
     const [gameStatus, setGameStatus] = useState('playing'); // playing, won
+
+    const speak = (text) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = language === 'en' ? 'en-US' : 'de-DE';
+        utterance.rate = 0.85;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+    };
 
     useEffect(() => {
         // Prepare game: shuffle and double the cards (word and translation)
@@ -27,6 +35,9 @@ function WordMatchGame({ words, onExit, onAddXP }) {
             if (newSelected[0].pairId === newSelected[1].pairId) {
                 setMatched(prev => [...prev, newSelected[0].pairId]);
                 setSelected([]);
+                // Auto-speak the matched word
+                const matchedWord = words.find(w => w.word === newSelected[0].pairId);
+                if (matchedWord) speak(matchedWord.word);
                 if (matched.length + 1 === words.length) {
                     setGameStatus('won');
                     onAddXP(50);

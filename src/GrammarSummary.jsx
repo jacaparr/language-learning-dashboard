@@ -1,5 +1,14 @@
 import React from 'react';
 
+const speak = (text, langCode) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langCode === 'en' ? 'en-US' : 'de-DE';
+    utterance.rate = 0.85;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+};
+
+
 // ... grammarContent (keeping content, updating visuals)
 const grammarContent = {
     en: {
@@ -319,8 +328,13 @@ function GrammarSummary({ language, level, onExit }) {
                             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '16px', padding: '18px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
                                 <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, marginBottom: '12px', color: '#fff', letterSpacing: '1px' }}>EJEMPLOS PRÁCTICOS</div>
                                 {lesson.examples.map((ex, i) => (
-                                    <div key={i} style={{ fontSize: '14px', padding: '10px 0', color: '#fff', fontWeight: '500', borderBottom: i === lesson.examples.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
-                                        • {ex}
+                                    <div key={i} style={{ fontSize: '14px', padding: '10px 0', color: '#fff', fontWeight: '500', borderBottom: i === lesson.examples.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
+                                        <span>• {ex}</span>
+                                        <button
+                                            onClick={() => speak(ex, language)}
+                                            title="Escuchar pronunciación"
+                                            style={{ flexShrink: 0, background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.3)', borderRadius: '8px', padding: '5px 8px', cursor: 'pointer', fontSize: '14px', color: '#00e5ff', lineHeight: 1 }}
+                                        >🔊</button>
                                     </div>
                                 ))}
                             </div>
