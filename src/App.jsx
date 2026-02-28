@@ -7,6 +7,8 @@ import GrammarGame from './GrammarGame';
 import LanguageSelector from './LanguageSelector';
 import GrammarSummary from './GrammarSummary';
 import WordMatchGame from './WordMatchGame';
+import FillBlankGame from './FillBlankGame';
+import StatsPanel from './StatsPanel';
 import { languages, levels, defaultContent } from './content';
 
 // Variantes de animación profesional
@@ -180,9 +182,17 @@ function App() {
     localStorage.setItem('view', view);
   }, [customTopics, xp, streak, language, level, view]);
 
-  const addXP = (earned) => setXp(prev => Math.min(prev + earned, 500));
+  const addXP = (earned) => {
+    setXp(prev => Math.min(prev + earned, 500));
+    // Track daily XP for stats panel
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyXP = JSON.parse(localStorage.getItem('dailyXP') || '{}');
+    dailyXP[today] = (dailyXP[today] || 0) + earned;
+    localStorage.setItem('dailyXP', JSON.stringify(dailyXP));
+  };
   const startTopic = (topic) => { setSelectedWords(topic.words); setView('flashcards'); };
   const startMatchGame = (topic) => { setSelectedWords(topic.words); setView('match'); };
+  const startFillBlank = (topic) => { setSelectedWords(topic.words); setView('fillblank'); };
   const currentFlag = languages.find(l => l.id === language)?.flag || '🇬🇧';
 
   const handleStart = (lang, lvl) => {
@@ -271,7 +281,9 @@ function App() {
       case 'welcome': return <WelcomeScreen onStart={handleStart} />;
       case 'quiz': return <Quiz onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
       case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
-      case 'match': return <WordMatchGame words={selectedWords} onExit={() => setView('dashboard')} onAddXP={addXP} />;
+      case 'match': return <WordMatchGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
+      case 'fillblank': return <FillBlankGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
+      case 'stats': return <StatsPanel onExit={() => setView('dashboard')} streak={streak} />;
       case 'grammar': return <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />;
       case 'grammar-summary': return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} onPractice={() => setView('grammar')} />;
       case 'profile': return <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />;
@@ -360,17 +372,22 @@ function App() {
                     <h3 style={{ color: '#fff', textShadow: '0 2px 5px rgba(0,0,0,0.3)', fontWeight: '900' }}>
                       {topic.title === 'Work' ? 'Trabajo' : topic.title === 'Environment' ? 'Medio Ambiente' : topic.title === 'Philosophy & Ethics' ? 'Filosofía' : topic.title}
                     </h3>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                    <div style={{ display: 'flex', gap: '6px', marginTop: 'auto', flexWrap: 'wrap' }}>
                       <button
                         onClick={(e) => { e.stopPropagation(); startTopic(topic); }}
                         className="glass-card"
-                        style={{ padding: '8px 12px', fontSize: '10px', margin: 0, background: 'rgba(255,255,255,0.1)' }}
+                        style={{ flex: 1, padding: '8px 6px', fontSize: '10px', margin: 0, background: 'rgba(255,255,255,0.1)' }}
                       >📇 REPASAR</button>
                       <button
                         onClick={(e) => { e.stopPropagation(); startMatchGame(topic); }}
+                        className="glass-card"
+                        style={{ flex: 1, padding: '8px 6px', fontSize: '10px', margin: 0, background: 'rgba(0,229,255,0.12)', color: '#00e5ff', border: '1px solid rgba(0,229,255,0.3)' }}
+                      >🎮 PAREJAS</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); startFillBlank(topic); }}
                         className="premium-btn"
-                        style={{ padding: '8px 12px', fontSize: '10px', margin: 0, background: '#fff', color: '#000' }}
-                      >🎮 JUGAR</button>
+                        style={{ flex: 1, padding: '8px 6px', fontSize: '10px', margin: 0, background: '#fff', color: '#000' }}
+                      >✍️ FRASES</button>
                     </div>
                   </motion.div>
                 ))}
@@ -392,6 +409,7 @@ function App() {
                 <button className={`tab-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
                 <button className={`tab-btn ${view === 'quiz' ? 'active' : ''}`} onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
                 <button className={`tab-btn ${view === 'grammar' ? 'active' : ''}`} onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
+                <button className={`tab-btn ${view === 'stats' ? 'active' : ''}`} onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
                 <button className={`tab-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
               </nav>
             </div>
@@ -409,5 +427,3 @@ function App() {
 }
 
 export default App;
-/ /   F o r c e   b u i l d   a t   0 2 / 2 8 / 2 0 2 6   1 8 : 1 6 : 0 8  
- 
