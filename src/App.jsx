@@ -159,13 +159,19 @@ function SuggestModal({ onCancel, onSuggest }) {
 }
 
 function App() {
-  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem('language') || 'en';
+    return saved === 'dt' ? 'de' : saved;
+  });
   const [level, setLevel] = useState(() => localStorage.getItem('level') || 'B1');
   const [xp, setXp] = useState(() => parseInt(localStorage.getItem('xp')) || 420);
   const [streak, setStreak] = useState(() => parseInt(localStorage.getItem('streak')) || 15);
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('view') || 'welcome');
-  const [selectedWords, setSelectedWords] = useState([]);
+  const [selectedWords, setSelectedWords] = useState(() => {
+    const saved = localStorage.getItem('selectedWords');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [customTopics, setCustomTopics] = useState(() => {
     const saved = localStorage.getItem('customTopics');
@@ -180,7 +186,8 @@ function App() {
     localStorage.setItem('language', language);
     localStorage.setItem('level', level);
     localStorage.setItem('view', view);
-  }, [customTopics, xp, streak, language, level, view]);
+    localStorage.setItem('selectedWords', JSON.stringify(selectedWords));
+  }, [customTopics, xp, streak, language, level, view, selectedWords]);
 
   const addXP = (earned) => {
     setXp(prev => Math.min(prev + earned, 500));
@@ -224,18 +231,31 @@ function App() {
       }
 
       const data = await resp.json();
+      console.log('Datos recibidos de IA:', data);
 
       // Sanitización profunda para evitar "term 1", "trimestre 1", "1.", etc.
-      const sanitizedWords = data.map(item => ({
-        ...item,
-        word: item.word
+      const sanitizedWords = data.map(item => {
+        // Asegurarnos de que word sea string
+        const rawWord = String(item.word || '');
+        const cleanedWord = rawWord
           .replace(/^\d+[\.\)]\s*/, '') // Remove "1. " or "1) "
           .replace(/\s*(term|trimestre|nivel|level|part|parte|word|palabra|sección)\s*\d+/i, '') // Remove meta labels
           .replace(/\s*[\d]+$/g, '') // Remove trailing numbers
-          .trim(),
-        translation: item.translation.trim(),
-        example: item.example.trim()
-      })).filter(item => item.word.length > 2); // Filter empty or too short artifacts
+          .trim();
+
+        return {
+          ...item,
+          word: cleanedWord || rawWord, // Fallback al original si la limpieza lo borra todo
+          translation: String(item.translation || '').trim(),
+          example: String(item.example || '').trim()
+        };
+      }).filter(item => item.word.length >= 2);
+
+      console.log('Palabras sanitizadas final:', sanitizedWords);
+
+      if (sanitizedWords.length === 0) {
+        throw new Error('La IA no generó palabras válidas para este tema.');
+      }
 
       const newTopic = {
         id: Date.now(),

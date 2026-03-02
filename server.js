@@ -52,7 +52,8 @@ app.post('/api/generate', async (req, res) => {
     Level: ${level} (CEFR)
     
     Requirements:
-    1. word: The actual vocabulary word or phrase in the target language. Do NOT include numbers, indices, or topic names (e.g., use "Subway" instead of "Subway term 1").
+    1. word: The actual vocabulary word or phrase ONLY in the target language (${language === 'en' ? 'English' : 'German'}). 
+       CRITICAL: Do NOT include Spanish translations, No numbers, No indices. (Example: "Pauschalreise" instead of "el viaje de Pauschalreise").
     2. translation: Accurate Spanish translation of the word.
     3. example: A short, natural example sentence in the target language (${language === 'en' ? 'English' : 'German'}).
     

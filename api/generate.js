@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: "gemini-flash-latest",
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -44,9 +44,10 @@ export default async function handler(req, res) {
     Level: ${level} (CEFR)
     
     Requirements:
-    1. word: The actual vocabulary word or phrase in the target language. CLEAN: Do NOT include numbers, indices, or category names (No "term 1", No "word:", No "1.", No "trimestre"). Just the word.
-    2. translation: Accurate Spanish translation.
-    3. example: A short, natural example sentence in ${language === 'en' ? 'English' : 'German'}.
+    1. word: The actual vocabulary word or phrase ONLY in the target language (${language === 'en' ? 'English' : 'German'}). 
+       CRITICAL: Do NOT include Spanish translations, No numbers, No indices. (Example: "Pauschalreise" instead of "el viaje de Pauschalreise").
+    2. translation: Accurate Spanish translation of the word.
+    3. example: A short, natural example sentence in the target language (${language === 'en' ? 'English' : 'German'}).
     
     CRITICAL: Output ONLY a raw JSON array. No markdown code blocks.
     `;

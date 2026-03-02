@@ -10,7 +10,7 @@ function Flashcards({ words = [], language, onExit }) {
         window.speechSynthesis.speak(utterance);
     };
 
-    if (words.length === 0) return <div>No words!</div>;
+    if (words.length === 0) return <div style={{ textAlign: 'center', padding: '100px', color: '#fff', fontWeight: '900' }}>¡No hay palabras disponibles!</div>;
 
     const currentWord = words[index];
 
