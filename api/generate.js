@@ -11,7 +11,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required parameters' });
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API Key not configured in Vercel' });
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
     generationConfig: {
@@ -39,11 +44,11 @@ export default async function handler(req, res) {
     Level: ${level} (CEFR)
     
     Requirements:
-    1. word: The actual vocabulary word or phrase in the target language. Do NOT include numbers, indices, or topic names (e.g., use "Subway" instead of "Subway term 1").
-    2. translation: Accurate Spanish translation of the word.
-    3. example: A short, natural example sentence in the target language (${language === 'en' ? 'English' : 'German'}).
+    1. word: The actual vocabulary word or phrase in the target language. CLEAN: Do NOT include numbers, indices, or category names (No "term 1", No "word:", No "1.", No "trimestre"). Just the word.
+    2. translation: Accurate Spanish translation.
+    3. example: A short, natural example sentence in ${language === 'en' ? 'English' : 'German'}.
     
-    Ensure all content is appropriate for ${level} level.
+    CRITICAL: Output ONLY a raw JSON array. No markdown code blocks.
     `;
 
   try {

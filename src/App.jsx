@@ -225,13 +225,17 @@ function App() {
 
       const data = await resp.json();
 
-      // Sanitización profunda para evitar "term 1", "1.", etc.
+      // Sanitización profunda para evitar "term 1", "trimestre 1", "1.", etc.
       const sanitizedWords = data.map(item => ({
         ...item,
-        word: item.word.replace(/^\d+[\.\)]\s*/, '').replace(/\s*term\s*\d+/i, '').trim(),
+        word: item.word
+          .replace(/^\d+[\.\)]\s*/, '') // Remove "1. " or "1) "
+          .replace(/\s*(term|trimestre|nivel|level|part|parte|word|palabra|sección)\s*\d+/i, '') // Remove meta labels
+          .replace(/\s*[\d]+$/g, '') // Remove trailing numbers
+          .trim(),
         translation: item.translation.trim(),
         example: item.example.trim()
-      })).filter(item => item.word.length > 0);
+      })).filter(item => item.word.length > 2); // Filter empty or too short artifacts
 
       const newTopic = {
         id: Date.now(),
