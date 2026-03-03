@@ -1,24 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function Quiz({ onComplete, onCancel }) {
+function Quiz({ words = [], language, onComplete, onCancel }) {
     const [qIndex, setQIndex] = useState(0);
     const [score, setScore] = useState(0);
+    const [dynamicQuestions, setDynamicQuestions] = useState([]);
 
-    const questions = [
-        { q: "¿Cómo se dice 'Environment' en Alemán?", a: ["Umwelt", "Haus", "Auto"], correct: 0 },
-        { q: "Traduce: 'Never have I seen such beauty'", a: ["Nunca he visto...", "Siempre veo...", "Vi ayer..."], correct: 0 },
-        { q: "¿Qué significa 'Ephemeral'?", a: ["Duradero", "Efímero", "Rápido"], correct: 1 }
-    ];
+    useEffect(() => {
+        if (!words || words.length < 3) return;
+
+        // Generate 5 dynamic questions or as many as we have words
+        const numQ = Math.min(5, words.length);
+        const shuffled = [...words].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, numQ);
+
+        const generated = selected.map(target => {
+            const wrongOptions = words
+                .filter(w => w.word !== target.word)
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 2)
+                .map(w => w.word);
+
+            const options = [target.word, ...wrongOptions].sort(() => Math.random() - 0.5);
+            const correctIdx = options.indexOf(target.word);
+
+            return {
+                q: `¿Cómo se dice '${target.translation}' en ${language === 'de' ? 'Alemán' : 'Inglés'}?`,
+                a: options,
+                correct: correctIdx
+            };
+        });
+
+        setDynamicQuestions(generated);
+    }, [words, language]);
 
     const handleAnswer = (idx) => {
-        if (idx === questions[qIndex].correct) setScore(score + 10);
+        const isCorrect = idx === dynamicQuestions[qIndex].correct;
+        const newScore = isCorrect ? score + 10 : score;
 
-        if (qIndex < questions.length - 1) {
+        if (isCorrect) setScore(newScore);
+
+        if (qIndex < dynamicQuestions.length - 1) {
             setQIndex(qIndex + 1);
         } else {
-            onComplete(score + (idx === questions[qIndex].correct ? 10 : 0));
+            onComplete(newScore);
         }
     };
+
+    if (dynamicQuestions.length === 0) {
+        return (
+            <div className="dashboard-container reveal" style={{ textAlign: 'center', padding: '100px' }}>
+                <div className="mesh-container"><div className="orb orb-1"></div></div>
+                <h2 style={{ color: '#fff' }}>Necesitas más vocabulario para empezar el Quiz.</h2>
+                <button onClick={onCancel} className="premium-btn" style={{ marginTop: '20px', width: 'auto', padding: '15px 40px' }}>VOLVER</button>
+            </div>
+        );
+    }
+
+    const currentQ = dynamicQuestions[qIndex];
 
     return (
         <>
@@ -29,14 +67,14 @@ function Quiz({ onComplete, onCancel }) {
             <div className="dashboard-container reveal">
                 <header className="header" style={{ marginBottom: '20px' }}>
                     <button onClick={onCancel} className="glass-card" style={{ padding: '12px 24px', borderRadius: '16px', margin: 0, background: 'rgba(255,255,255,0.1)' }}>← SALIR</button>
-                    <div className="badge-pill" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>PREGUNTA {qIndex + 1} / {questions.length}</div>
+                    <div className="badge-pill" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>PREGUNTA {qIndex + 1} / {dynamicQuestions.length}</div>
                 </header>
 
                 <div className="glass-card reveal" style={{ marginTop: '40px', padding: '40px', textAlign: 'center', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <h2 style={{ fontSize: '28px', fontWeight: '900', marginBottom: '40px', lineHeight: 1.2, color: '#fff', textShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>{questions[qIndex].q}</h2>
+                    <h2 style={{ fontSize: '28px', fontWeight: '900', marginBottom: '40px', lineHeight: 1.2, color: '#fff', textShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>{currentQ.q}</h2>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {questions[qIndex].a.map((opt, idx) => (
+                        {currentQ.a.map((opt, idx) => (
                             <button
                                 key={idx}
                                 className="glass-card"

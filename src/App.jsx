@@ -303,7 +303,9 @@ function App() {
   const renderContent = () => {
     switch (view) {
       case 'welcome': return <WelcomeScreen onStart={handleStart} />;
-      case 'quiz': return <Quiz onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
+      case 'quiz':
+        const allWords = [...(defaultContent[language]?.[level]?.topics?.[0]?.words || []), ...customTopics.flatMap(t => t.words)];
+        return <Quiz words={allWords} language={language} onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
       case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
       case 'match': return <WordMatchGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
       case 'fillblank': return <FillBlankGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
