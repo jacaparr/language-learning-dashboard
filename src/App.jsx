@@ -32,7 +32,7 @@ function ProfileView({ xp, streak, onExit }) {
 
         <div className="glass-card reveal" style={{ textAlign: 'center', padding: '40px' }}>
           <div style={{ width: '100px', height: '100px', background: 'linear-gradient(135deg, #00d2ff, #9d50bb)', borderRadius: '50%', margin: '0 auto 20px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '4px solid rgba(255,255,255,0.2)' }}>👤</div>
-          <h2 style={{ fontSize: '28px', fontWeight: '900', margin: 0 }}>Alex Rivers</h2>
+          <h2 style={{ fontSize: '28px', fontWeight: '900', margin: 0 }}>Jose Antonio Caparros</h2>
           <p style={{ opacity: 0.8, color: '#fff' }}>Estudiante nivel C1</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '30px' }}>
@@ -391,7 +391,7 @@ function App() {
             <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
             <div className="dashboard-container">
               <header className="header">
-                <h1 className="user-name">Alex Rivers</h1>
+                <h1 className="user-name">Jose Antonio Caparros</h1>
                 <div className="badge-pill" style={{ background: 'rgba(0, 242, 255, 0.15)', color: '#00f2ff' }}>{level} • {currentFlag}</div>
               </header>
 
