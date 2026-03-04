@@ -167,7 +167,12 @@ function App() {
   const [xp, setXp] = useState(() => parseInt(localStorage.getItem('xp')) || 420);
   const [streak, setStreak] = useState(() => parseInt(localStorage.getItem('streak')) || 15);
   const [searchTerm, setSearchTerm] = useState('');
-  const [view, setView] = useState(() => localStorage.getItem('view') || 'welcome');
+  const [view, setView] = useState(() => {
+    const saved = localStorage.getItem('view') || 'welcome';
+    // Solo restaurar vistas estables, nunca estados de juego
+    const stableViews = ['welcome', 'dashboard'];
+    return stableViews.includes(saved) ? saved : 'dashboard';
+  });
   const [selectedWords, setSelectedWords] = useState(() => {
     const saved = localStorage.getItem('selectedWords');
     return saved ? JSON.parse(saved) : [];
@@ -305,14 +310,61 @@ function App() {
       case 'welcome': return <WelcomeScreen onStart={handleStart} />;
       case 'quiz':
         const allWords = [...(defaultContent[language]?.[level]?.topics?.[0]?.words || []), ...customTopics.flatMap(t => t.words)];
-        return <Quiz words={allWords} language={language} onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;
+        return (
+          <div style={{ position: 'relative' }}>
+            <Quiz words={allWords} language={language} onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />
+            <nav className="tab-bar">
+              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
+              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
+              <button className="tab-btn" onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
+              <button className="tab-btn" onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
+              <button className="tab-btn" onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
+            </nav>
+          </div>
+        );
       case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
       case 'match': return <WordMatchGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
       case 'fillblank': return <FillBlankGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
-      case 'stats': return <StatsPanel onExit={() => setView('dashboard')} streak={streak} />;
-      case 'grammar': return <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />;
+      case 'stats':
+        return (
+          <div style={{ position: 'relative' }}>
+            <StatsPanel onExit={() => setView('dashboard')} streak={streak} />
+            <nav className="tab-bar">
+              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
+              <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
+              <button className="tab-btn" onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
+              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>📊</button>
+              <button className="tab-btn" onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
+            </nav>
+          </div>
+        );
+      case 'grammar':
+        return (
+          <div style={{ position: 'relative' }}>
+            <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />
+            <nav className="tab-bar">
+              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
+              <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
+              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
+              <button className="tab-btn" onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
+              <button className="tab-btn" onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
+            </nav>
+          </div>
+        );
       case 'grammar-summary': return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} onPractice={() => setView('grammar')} />;
-      case 'profile': return <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />;
+      case 'profile':
+        return (
+          <div style={{ position: 'relative' }}>
+            <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />
+            <nav className="tab-bar">
+              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
+              <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
+              <button className="tab-btn" onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
+              <button className="tab-btn" onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
+              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>👤</button>
+            </nav>
+          </div>
+        );
       case 'generating': return (
         <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
           <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
