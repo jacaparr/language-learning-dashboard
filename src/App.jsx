@@ -9,6 +9,7 @@ import GrammarSummary from './GrammarSummary';
 import WordMatchGame from './WordMatchGame';
 import FillBlankGame from './FillBlankGame';
 import StatsPanel from './StatsPanel';
+import AIChat from './AIChat';
 import { languages, levels, defaultContent } from './content';
 
 // Variantes de animación profesional
@@ -220,7 +221,6 @@ function WelcomeScreen({ onStart }) {
     </>
   );
 }
-
 function SuggestModal({ onCancel, onSuggest }) {
   const [text, setText] = useState('');
   return (
@@ -242,6 +242,32 @@ function SuggestModal({ onCancel, onSuggest }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function TabBar({ activeView, setView }) {
+  const tabs = [
+    { id: 'dashboard', icon: '🏠' },
+    { id: 'chat', icon: '💬' },
+    { id: 'quiz', icon: '🎯' },
+    { id: 'grammar', icon: '🧩' },
+    { id: 'stats', icon: '📊' },
+    { id: 'profile', icon: '👤' }
+  ];
+
+  return (
+    <nav className="tab-bar">
+      {tabs.map(tab => (
+        <button
+          key={tab.id}
+          className={`tab-btn ${activeView === tab.id ? 'active' : ''}`}
+          onClick={() => setView(tab.id)}
+          style={{ border: 'none', cursor: 'pointer' }}
+        >
+          {tab.icon}
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -272,7 +298,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState(() => {
     const saved = localStorage.getItem('view') || 'user-selector';
-    const stableViews = ['user-selector', 'welcome', 'dashboard'];
+    const stableViews = ['user-selector', 'welcome', 'dashboard', 'chat', 'stats', 'profile'];
     return stableViews.includes(saved) ? saved : 'dashboard';
   });
   const [selectedWords, setSelectedWords] = useState(() => {
@@ -285,6 +311,11 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
   const [generatingTopicName, setGeneratingTopicName] = useState('');
+
+  // Sincronizar tema de idioma con el body
+  useEffect(() => {
+    document.body.className = `lang-${language}`;
+  }, [language]);
 
   useEffect(() => {
     localStorage.setItem('users', JSON.stringify(users));
@@ -431,18 +462,19 @@ function App() {
           }}
         />;
       case 'welcome': return <WelcomeScreen onStart={handleStart} />;
+      case 'chat':
+        return (
+          <div style={{ position: 'relative' }}>
+            <AIChat language={language} level={level} onExit={() => setView('dashboard')} />
+            <TabBar activeView={view} setView={setView} />
+          </div>
+        );
       case 'quiz':
         const allWords = [...(defaultContent[language]?.[level]?.topics?.[0]?.words || []), ...customTopics.flatMap(t => t.words)];
         return (
           <div style={{ position: 'relative' }}>
             <Quiz words={allWords} language={language} onComplete={(earned) => { addXP(earned); setView('dashboard'); }} onCancel={() => setView('dashboard')} />
-            <nav className="tab-bar">
-              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
-              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
-              <button className="tab-btn" onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
-              <button className="tab-btn" onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
-              <button className="tab-btn" onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
-            </nav>
+            <TabBar activeView={view} setView={setView} />
           </div>
         );
       case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
@@ -452,26 +484,14 @@ function App() {
         return (
           <div style={{ position: 'relative' }}>
             <StatsPanel onExit={() => setView('dashboard')} streak={streak} userId={activeUser.id} />
-            <nav className="tab-bar">
-              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
-              <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
-              <button className="tab-btn" onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
-              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>📊</button>
-              <button className="tab-btn" onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
-            </nav>
+            <TabBar activeView={view} setView={setView} />
           </div>
         );
       case 'grammar':
         return (
           <div style={{ position: 'relative' }}>
             <GrammarGame language={language} level={level} onExit={() => setView('dashboard')} onAddXP={addXP} />
-            <nav className="tab-bar">
-              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
-              <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
-              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
-              <button className="tab-btn" onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
-              <button className="tab-btn" onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
-            </nav>
+            <TabBar activeView={view} setView={setView} />
           </div>
         );
       case 'grammar-summary': return <GrammarSummary language={language} level={level} onExit={() => setView('dashboard')} onPractice={() => setView('grammar')} />;
@@ -486,13 +506,7 @@ function App() {
               onChangeProfile={() => setView('user-selector')}
               onChangeSettings={() => setView('welcome')}
             />
-            <nav className="tab-bar">
-              <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
-              <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
-              <button className="tab-btn" onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
-              <button className="tab-btn" onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
-              <button className="tab-btn active" style={{ border: 'none', cursor: 'pointer' }}>👤</button>
-            </nav>
+            <TabBar activeView={view} setView={setView} />
           </div>
         );
       case 'generating': return (
@@ -612,14 +626,7 @@ function App() {
               </div>
 
               <div style={{ height: '140px' }}></div>
-
-              <nav className="tab-bar">
-                <button className={`tab-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
-                <button className={`tab-btn ${view === 'quiz' ? 'active' : ''}`} onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
-                <button className={`tab-btn ${view === 'grammar' ? 'active' : ''}`} onClick={() => setView('grammar')} style={{ border: 'none', cursor: 'pointer' }}>🧩</button>
-                <button className={`tab-btn ${view === 'stats' ? 'active' : ''}`} onClick={() => setView('stats')} style={{ border: 'none', cursor: 'pointer' }}>📊</button>
-                <button className={`tab-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')} style={{ border: 'none', cursor: 'pointer' }}>👤</button>
-              </nav>
+              <TabBar activeView={view} setView={setView} />
             </div>
           </motion.div>
         );
