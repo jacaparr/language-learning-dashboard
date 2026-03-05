@@ -1,4 +1,0 @@
-VERIFICATION_SUCCESSFUL_REPO_SYNC_V1
-Time: 2026-03-05 15:15
-Author: Antigravity
-If you can see this, the repo is syncing correctly.
