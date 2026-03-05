@@ -248,9 +248,11 @@ function SuggestModal({ onCancel, onSuggest }) {
 function App() {
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('users');
-    if (saved) return JSON.parse(saved);
-    // Usuario por defecto si no hay perfiles (migración)
-    return [{ id: 1, name: 'Jose Antonio Caparros', avatar: '👤', color: 'linear-gradient(135deg, #00d2ff, #9d50bb)' }];
+    let parsed = saved ? JSON.parse(saved) : [{ id: 1, name: 'Jose Antonio Caparros', avatar: '👤', color: 'linear-gradient(135deg, #00d2ff, #9d50bb)' }];
+
+    // Migración forzosa: si el usuario es Alex Rivers, cambiarlo a Jose Antonio
+    parsed = parsed.map(u => (u.name === 'Alex Rivers' || u.name === 'Alex') ? { ...u, name: 'Jose Antonio Caparros' } : u);
+    return parsed;
   });
 
   const [activeUserId, setActiveUserId] = useState(() => {
@@ -285,12 +287,6 @@ function App() {
   const [generatingTopicName, setGeneratingTopicName] = useState('');
 
   useEffect(() => {
-    // Migración: Si existe un usuario "Alex Rivers", cambiarlo a "Jose Antonio Caparros"
-    const hasAlex = users.some(u => u.name === 'Alex Rivers');
-    if (hasAlex) {
-      setUsers(users.map(u => u.name === 'Alex Rivers' ? { ...u, name: 'Jose Antonio Caparros' } : u));
-    }
-
     localStorage.setItem('users', JSON.stringify(users));
     localStorage.setItem('activeUserId', activeUserId);
     localStorage.setItem(uKey + 'customTopics', JSON.stringify(customTopics));
