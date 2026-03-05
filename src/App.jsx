@@ -18,7 +18,7 @@ const pageVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
 };
 
-function ProfileView({ xp, streak, onExit }) {
+function ProfileView({ user, xp, streak, onExit, onChangeProfile }) {
   return (
     <>
       <div className="mesh-container">
@@ -31,9 +31,9 @@ function ProfileView({ xp, streak, onExit }) {
         </header>
 
         <div className="glass-card reveal" style={{ textAlign: 'center', padding: '40px' }}>
-          <div style={{ width: '100px', height: '100px', background: 'linear-gradient(135deg, #00d2ff, #9d50bb)', borderRadius: '50%', margin: '0 auto 20px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '4px solid rgba(255,255,255,0.2)' }}>👤</div>
-          <h2 style={{ fontSize: '28px', fontWeight: '900', margin: 0 }}>Jose Antonio Caparros</h2>
-          <p style={{ opacity: 0.8, color: '#fff' }}>Estudiante nivel C1</p>
+          <div style={{ width: '100px', height: '100px', background: user.color || 'linear-gradient(135deg, #00d2ff, #9d50bb)', borderRadius: '50%', margin: '0 auto 20px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '4px solid rgba(255,255,255,0.2)' }}>{user.avatar || '👤'}</div>
+          <h2 style={{ fontSize: '28px', fontWeight: '900', margin: 0 }}>{user.name}</h2>
+          <p style={{ opacity: 0.8, color: '#fff' }}>Estudiante de Idiomas</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '30px' }}>
             <div className="glass-card" style={{ padding: '15px', background: 'rgba(255,255,255,0.08)' }}>
@@ -45,6 +45,10 @@ function ProfileView({ xp, streak, onExit }) {
               <div style={{ fontSize: '24px', fontWeight: '900' }}>{streak}</div>
             </div>
           </div>
+
+          <button onClick={onChangeProfile} className="premium-btn" style={{ marginTop: '30px', width: '100%', padding: '15px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+            CAMBIAR PERFIL
+          </button>
         </div>
 
         <div className="glass-card reveal" style={{ marginTop: '20px', padding: '20px' }}>
@@ -57,6 +61,84 @@ function ProfileView({ xp, streak, onExit }) {
         </div>
       </div>
     </>
+  );
+}
+
+function UserSelector({ users, onSelect, onAdd }) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+
+  const colors = [
+    'linear-gradient(135deg, #00d2ff, #9d50bb)',
+    'linear-gradient(135deg, #ff9a9e, #fecfef)',
+    'linear-gradient(135deg, #a1c4fd, #c2e9fb)',
+    'linear-gradient(135deg, #84fab0, #8fd3f4)',
+    'linear-gradient(135deg, #fccb90, #d57eeb)'
+  ];
+  const avatars = ['👤', '🐱', '🦊', '🦁', '🐼', '🐨', '🐙', '🚀'];
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div></div>
+      <div className="dashboard-container reveal" style={{ maxWidth: '500px', width: '100%' }}>
+        <header style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h1 style={{ fontSize: '36px', fontWeight: '900', margin: 0 }}>¿Quién va a estudiar?</h1>
+          <p style={{ opacity: 0.7 }}>Elige un perfil para continuar</p>
+        </header>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+          {users.map(u => (
+            <motion.div
+              key={u.id}
+              whileHover={{ y: -5, scale: 1.02 }}
+              onClick={() => onSelect(u.id)}
+              className="glass-card"
+              style={{ padding: '30px', textAlign: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.08)' }}
+            >
+              <div style={{ fontSize: '50px', marginBottom: '15px', background: u.color, borderRadius: '50%', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px auto' }}>{u.avatar || '👤'}</div>
+              <div style={{ fontWeight: '900', fontSize: '18px' }}>{u.name}</div>
+            </motion.div>
+          ))}
+
+          <motion.div
+            whileHover={{ y: -5 }}
+            onClick={() => setIsAdding(true)}
+            className="glass-card"
+            style={{ padding: '30px', textAlign: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', borderStyle: 'dashed' }}
+          >
+            <div style={{ fontSize: '50px', marginBottom: '15px' }}>➕</div>
+            <div style={{ fontWeight: '900', fontSize: '18px' }}>Nuevo Perfil</div>
+          </motion.div>
+        </div>
+
+        <AnimatePresence>
+          {isAdding && (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="glass-card" style={{ padding: '30px', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', position: 'fixed', inset: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Crear Nuevo Perfil</h2>
+              <input
+                className="search-input"
+                placeholder="Nombre del usuario..."
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                style={{ marginBottom: '30px' }}
+              />
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <button className="glass-card" style={{ flex: 1, padding: '15px' }} onClick={() => setIsAdding(false)}>CANCELAR</button>
+                <button className="premium-btn" style={{ flex: 1, padding: '15px' }} onClick={() => {
+                  if (newName) {
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const avatar = avatars[Math.floor(Math.random() * avatars.length)];
+                    onAdd({ id: Date.now(), name: newName, color, avatar });
+                    setIsAdding(false);
+                    setNewName('');
+                  }
+                }}>CREAR</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
 
@@ -159,48 +241,63 @@ function SuggestModal({ onCancel, onSuggest }) {
 }
 
 function App() {
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('users');
+    if (saved) return JSON.parse(saved);
+    // Usuario por defecto si no hay perfiles (migración)
+    return [{ id: 1, name: 'Jose Antonio Caparros', avatar: '👤', color: 'linear-gradient(135deg, #00d2ff, #9d50bb)' }];
+  });
+
+  const [activeUserId, setActiveUserId] = useState(() => {
+    return parseInt(localStorage.getItem('activeUserId')) || 1;
+  });
+
+  const activeUser = users.find(u => u.id === activeUserId) || users[0];
+  const uKey = `user_${activeUser.id}_`;
+
   const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem('language') || 'en';
+    const saved = localStorage.getItem(uKey + 'language') || 'en';
     return saved === 'dt' ? 'de' : saved;
   });
-  const [level, setLevel] = useState(() => localStorage.getItem('level') || 'B1');
-  const [xp, setXp] = useState(() => parseInt(localStorage.getItem('xp')) || 420);
-  const [streak, setStreak] = useState(() => parseInt(localStorage.getItem('streak')) || 15);
+  const [level, setLevel] = useState(() => localStorage.getItem(uKey + 'level') || 'B1');
+  const [xp, setXp] = useState(() => parseInt(localStorage.getItem(uKey + 'xp')) || 0);
+  const [streak, setStreak] = useState(() => parseInt(localStorage.getItem(uKey + 'streak')) || 0);
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState(() => {
-    const saved = localStorage.getItem('view') || 'welcome';
-    // Solo restaurar vistas estables, nunca estados de juego
-    const stableViews = ['welcome', 'dashboard'];
+    const saved = localStorage.getItem('view') || 'user-selector';
+    const stableViews = ['user-selector', 'welcome', 'dashboard'];
     return stableViews.includes(saved) ? saved : 'dashboard';
   });
   const [selectedWords, setSelectedWords] = useState(() => {
-    const saved = localStorage.getItem('selectedWords');
+    const saved = localStorage.getItem(uKey + 'selectedWords');
     return saved ? JSON.parse(saved) : [];
   });
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [customTopics, setCustomTopics] = useState(() => {
-    const saved = localStorage.getItem('customTopics');
+    const saved = localStorage.getItem(uKey + 'customTopics');
     return saved ? JSON.parse(saved) : [];
   });
   const [generatingTopicName, setGeneratingTopicName] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('customTopics', JSON.stringify(customTopics));
-    localStorage.setItem('xp', xp);
-    localStorage.setItem('streak', streak);
-    localStorage.setItem('language', language);
-    localStorage.setItem('level', level);
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('activeUserId', activeUserId);
+    localStorage.setItem(uKey + 'customTopics', JSON.stringify(customTopics));
+    localStorage.setItem(uKey + 'xp', xp);
+    localStorage.setItem(uKey + 'streak', streak);
+    localStorage.setItem(uKey + 'language', language);
+    localStorage.setItem(uKey + 'level', level);
     localStorage.setItem('view', view);
-    localStorage.setItem('selectedWords', JSON.stringify(selectedWords));
-  }, [customTopics, xp, streak, language, level, view, selectedWords]);
+    localStorage.setItem(uKey + 'selectedWords', JSON.stringify(selectedWords));
+  }, [users, activeUserId, uKey, customTopics, xp, streak, language, level, view, selectedWords]);
 
   const addXP = (earned) => {
     setXp(prev => Math.min(prev + earned, 500));
-    // Track daily XP for stats panel
     const today = new Date().toISOString().slice(0, 10);
-    const dailyXP = JSON.parse(localStorage.getItem('dailyXP') || '{}');
+    const dailyXPKey = uKey + 'dailyXP';
+    const dailyXP = JSON.parse(localStorage.getItem(dailyXPKey) || '{}');
     dailyXP[today] = (dailyXP[today] || 0) + earned;
-    localStorage.setItem('dailyXP', JSON.stringify(dailyXP));
+    localStorage.setItem(dailyXPKey, JSON.stringify(dailyXP));
   };
   const startTopic = (topic) => { setSelectedWords(topic.words); setView('flashcards'); };
   const startMatchGame = (topic) => { setSelectedWords(topic.words); setView('match'); };
@@ -307,6 +404,20 @@ function App() {
   // Contenido dinámico para las vistas
   const renderContent = () => {
     switch (view) {
+      case 'user-selector':
+        return <UserSelector
+          users={users}
+          onSelect={(id) => {
+            setActiveUserId(id);
+            // Forzar recarga de estado para el nuevo usuario
+            window.location.reload();
+          }}
+          onAdd={(u) => {
+            setUsers([...users, u]);
+            setActiveUserId(u.id);
+            setView('welcome');
+          }}
+        />;
       case 'welcome': return <WelcomeScreen onStart={handleStart} />;
       case 'quiz':
         const allWords = [...(defaultContent[language]?.[level]?.topics?.[0]?.words || []), ...customTopics.flatMap(t => t.words)];
@@ -355,7 +466,13 @@ function App() {
       case 'profile':
         return (
           <div style={{ position: 'relative' }}>
-            <ProfileView xp={xp} streak={streak} onExit={() => setView('dashboard')} />
+            <ProfileView
+              user={activeUser}
+              xp={xp}
+              streak={streak}
+              onExit={() => setView('dashboard')}
+              onChangeProfile={() => setView('user-selector')}
+            />
             <nav className="tab-bar">
               <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
               <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>
@@ -391,7 +508,7 @@ function App() {
             <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
             <div className="dashboard-container">
               <header className="header">
-                <h1 className="user-name">Jose Antonio Caparros</h1>
+                <h1 className="user-name">{activeUser.name}</h1>
                 <div className="badge-pill" style={{ background: 'rgba(0, 242, 255, 0.15)', color: '#00f2ff' }}>{level} • {currentFlag}</div>
               </header>
 
