@@ -17,7 +17,7 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: "gemini-1.5-flash",
     generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -68,8 +68,12 @@ app.post('/api/generate', async (req, res) => {
         const words = JSON.parse(text);
         res.json(words);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("AI Generation failed:", error);
+        res.status(500).json({
+            error: "Error de IA",
+            details: error.message || "Unknown error",
+            fullError: error.toString()
+        });
     }
 });
 

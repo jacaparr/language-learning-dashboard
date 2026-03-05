@@ -334,7 +334,8 @@ function App() {
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.details || 'Error al generar contenido');
+        const fullMsg = errorData.details ? `${errorData.error}: ${errorData.details}` : (errorData.error || 'Error al generar contenido');
+        throw new Error(fullMsg);
       }
 
       const data = await resp.json();

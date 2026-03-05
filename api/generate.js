@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: "gemini-1.5-flash",
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -62,6 +62,13 @@ export default async function handler(req, res) {
     res.status(200).json(words);
   } catch (error) {
     console.error("Gemini API Error:", error);
-    res.status(500).json({ error: 'Failed to generate content', details: error.message });
+    // Enviar el mensaje de error real para depuración
+    const errorMessage = error.message || 'Unknown error';
+    res.status(500).json({
+      error: 'Error de IA',
+      details: errorMessage,
+      isSafety: errorMessage.includes('safety') || errorMessage.includes('candidate'),
+      fullError: error.toString()
+    });
   }
 }
