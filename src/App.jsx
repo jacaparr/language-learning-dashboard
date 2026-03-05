@@ -285,6 +285,12 @@ function App() {
   const [generatingTopicName, setGeneratingTopicName] = useState('');
 
   useEffect(() => {
+    // Migración: Si existe un usuario "Alex Rivers", cambiarlo a "Jose Antonio Caparros"
+    const hasAlex = users.some(u => u.name === 'Alex Rivers');
+    if (hasAlex) {
+      setUsers(users.map(u => u.name === 'Alex Rivers' ? { ...u, name: 'Jose Antonio Caparros' } : u));
+    }
+
     localStorage.setItem('users', JSON.stringify(users));
     localStorage.setItem('activeUserId', activeUserId);
     localStorage.setItem(uKey + 'customTopics', JSON.stringify(customTopics));
@@ -415,12 +421,16 @@ function App() {
           users={users}
           onSelect={(id) => {
             setActiveUserId(id);
-            // Forzar recarga de estado para el nuevo usuario
+            localStorage.setItem('activeUserId', id);
+            localStorage.setItem('view', 'dashboard');
             window.location.reload();
           }}
           onAdd={(u) => {
-            setUsers([...users, u]);
+            const nl = [...users, u];
+            setUsers(nl);
+            localStorage.setItem('users', JSON.stringify(nl));
             setActiveUserId(u.id);
+            localStorage.setItem('activeUserId', u.id);
             setView('welcome');
           }}
         />;
