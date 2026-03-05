@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Environment variables (NEVER commit API keys)
+.env
+.env.*
+!.env.example
+
