@@ -439,7 +439,7 @@ function App() {
       case 'stats':
         return (
           <div style={{ position: 'relative' }}>
-            <StatsPanel onExit={() => setView('dashboard')} streak={streak} />
+            <StatsPanel onExit={() => setView('dashboard')} streak={streak} userId={activeUser.id} />
             <nav className="tab-bar">
               <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
               <button className="tab-btn" onClick={() => setView('quiz')} style={{ border: 'none', cursor: 'pointer' }}>🎯</button>

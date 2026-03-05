@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 
 const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-function StatsPanel({ onExit, streak }) {
-    // Build last-7-days data from localStorage
+function StatsPanel({ onExit, streak, userId }) {
+    // Build last-7-days data from localStorage (per user)
+    const dailyXPKey = userId ? `user_${userId}_dailyXP` : 'dailyXP';
     const days = useMemo(() => {
-        const dailyXP = JSON.parse(localStorage.getItem('dailyXP') || '{}');
+        const dailyXP = JSON.parse(localStorage.getItem(dailyXPKey) || '{}');
         return Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
             d.setDate(d.getDate() - (6 - i));
