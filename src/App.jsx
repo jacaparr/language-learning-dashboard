@@ -18,7 +18,7 @@ const pageVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
 };
 
-function ProfileView({ user, xp, streak, onExit, onChangeProfile }) {
+function ProfileView({ user, xp, streak, onExit, onChangeProfile, onChangeSettings }) {
   return (
     <>
       <div className="mesh-container">
@@ -46,7 +46,10 @@ function ProfileView({ user, xp, streak, onExit, onChangeProfile }) {
             </div>
           </div>
 
-          <button onClick={onChangeProfile} className="premium-btn" style={{ marginTop: '30px', width: '100%', padding: '15px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+          <button onClick={onChangeSettings} className="premium-btn" style={{ marginTop: '25px', width: '100%', padding: '15px', background: 'linear-gradient(135deg, #00d2ff22, #9d50bb22)', color: '#00e5ff', border: '1px solid rgba(0,229,255,0.3)' }}>
+            🌐 CAMBIAR IDIOMA / NIVEL
+          </button>
+          <button onClick={onChangeProfile} className="premium-btn" style={{ marginTop: '12px', width: '100%', padding: '15px', background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }}>
             CAMBIAR PERFIL
           </button>
         </div>
@@ -63,6 +66,8 @@ function ProfileView({ user, xp, streak, onExit, onChangeProfile }) {
     </>
   );
 }
+
+
 
 function UserSelector({ users, onSelect, onAdd }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -472,6 +477,7 @@ function App() {
               streak={streak}
               onExit={() => setView('dashboard')}
               onChangeProfile={() => setView('user-selector')}
+              onChangeSettings={() => setView('welcome')}
             />
             <nav className="tab-bar">
               <button className="tab-btn" onClick={() => setView('dashboard')} style={{ border: 'none', cursor: 'pointer' }}>🏠</button>
