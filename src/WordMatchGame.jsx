@@ -43,6 +43,11 @@ function WordMatchGame({ words, language = 'en', onExit, onAddXP }) {
                     onAddXP(50);
                 }
             } else {
+                // Report missed word for SRS
+                const missedWord = words.find(w => w.word === newSelected[0].pairId || w.word === newSelected[1].pairId);
+                if (missedWord && typeof window.onMissedWord === 'function') {
+                    window.onMissedWord(missedWord);
+                }
                 setTimeout(() => setSelected([]), 1000);
             }
         }

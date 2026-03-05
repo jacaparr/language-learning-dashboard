@@ -73,6 +73,10 @@ function FillBlankGame({ words, language, onExit, onAddXP }) {
             speak(current.example);
         } else {
             setStreak(0);
+            // Report missed word for SRS
+            if (current && typeof window.onMissedWord === 'function') {
+                window.onMissedWord(current);
+            }
         }
         setTimeout(() => {
             if (index + 1 >= validWords.length) {

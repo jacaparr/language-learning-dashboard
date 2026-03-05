@@ -46,12 +46,40 @@ function StatsPanel({ onExit, streak, userId }) {
                 </div>
             </header>
 
+            {/* Weekly Goal Progress */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass-card"
+                style={{ marginBottom: '24px', padding: '24px', background: 'linear-gradient(135deg, rgba(0,229,255,0.1), rgba(157,80,187,0.1))', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <div>
+                        <div style={{ fontSize: '11px', fontWeight: 900, opacity: 0.6, letterSpacing: '2px' }}>META SEMANAL</div>
+                        <div style={{ fontSize: '24px', fontWeight: 900 }}>{totalWeek} <span style={{ opacity: 0.4, fontSize: '18px' }}>/ 500 XP</span></div>
+                    </div>
+                    <div style={{ fontSize: '32px' }}>🎯</div>
+                </div>
+                <div className="progress-track" style={{ height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
+                    <motion.div
+                        className="progress-fill"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((totalWeek / 500) * 100, 100)}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        style={{ height: '100%', borderRadius: '10px', boxShadow: '0 0 20px var(--primary-glow)' }}
+                    ></motion.div>
+                </div>
+                <div style={{ fontSize: '12px', marginTop: '10px', opacity: 0.7, fontWeight: 600 }}>
+                    {totalWeek >= 500 ? "¡Meta alcanzada! Eres una leyenda. 🔥" : `Faltan ${500 - totalWeek} XP para tu objetivo.`}
+                </div>
+            </motion.div>
+
             {/* Summary cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '24px' }}>
                 {[
-                    { icon: '⚡', label: 'XP SEMANA', value: totalWeek },
-                    { icon: '🔥', label: 'RACHA', value: `${streak} días` },
-                    { icon: '📅', label: 'DÍAS ACTIVOS', value: `${activeDays}/7` }
+                    { icon: '💎', label: 'FUERZA', value: `${Math.min(Math.round((totalWeek / 300) * 100), 100)}%` },
+                    { icon: '🔥', label: 'RACHA', value: `${streak}d` },
+                    { icon: '🚀', label: 'VELOCIDAD', value: 'ALTA' }
                 ].map((stat, i) => (
                     <motion.div
                         key={i}
@@ -59,13 +87,13 @@ function StatsPanel({ onExit, streak, userId }) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
                         className="glass-card"
-                        style={{ padding: '18px', textAlign: 'center', background: 'rgba(255,255,255,0.07)' }}
+                        style={{ padding: '20px 10px', textAlign: 'center', background: 'rgba(255,255,255,0.05)' }}
                     >
-                        <div style={{ fontSize: '28px', marginBottom: '6px' }}>{stat.icon}</div>
-                        <div style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px', color: '#fff', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '24px', marginBottom: '6px' }}>{stat.icon}</div>
+                        <div style={{ fontSize: '9px', fontWeight: 900, opacity: 0.6, letterSpacing: '1px', marginBottom: '4px' }}>
                             {stat.label}
                         </div>
-                        <div style={{ fontSize: '20px', fontWeight: 900, color: '#fff' }}>{stat.value}</div>
+                        <div style={{ fontSize: '16px', fontWeight: 900 }}>{stat.value}</div>
                     </motion.div>
                 ))}
             </div>
@@ -74,10 +102,11 @@ function StatsPanel({ onExit, streak, userId }) {
             <motion.div
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                 className="glass-card"
-                style={{ padding: '28px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ padding: '28px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
-                <div style={{ fontSize: '12px', fontWeight: 900, opacity: 0.5, letterSpacing: '2px', marginBottom: '20px', color: '#fff' }}>
-                    XP POR DÍA — ÚLTIMOS 7 DÍAS
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 900, opacity: 0.6, letterSpacing: '2px' }}>PROGRESO DIARIO</div>
+                    <div style={{ fontSize: '11px', fontWeight: 900, color: 'var(--primary)' }}>ÚLTIMOS 7 DÍAS</div>
                 </div>
 
                 <svg viewBox={`0 0 ${SVG_W} ${SVG_H + 30}`} width="100%" style={{ overflow: 'visible' }}>
@@ -87,53 +116,35 @@ function StatsPanel({ onExit, streak, userId }) {
                         const y = SVG_H - barH;
                         const isToday = day.isToday;
                         const fill = day.xp === 0
-                            ? 'rgba(255,255,255,0.08)'
+                            ? 'rgba(255,255,255,0.05)'
                             : isToday
                                 ? 'url(#gradToday)'
-                                : 'url(#gradNormal)';
+                                : 'var(--primary)';
 
                         return (
                             <g key={day.date}>
                                 <defs>
-                                    <linearGradient id="gradNormal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.9" />
-                                        <stop offset="100%" stopColor="#9d50bb" stopOpacity="0.6" />
-                                    </linearGradient>
                                     <linearGradient id="gradToday" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#ffb400" stopOpacity="1" />
-                                        <stop offset="100%" stopColor="#ff6b35" stopOpacity="0.8" />
+                                        <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+                                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.8" />
                                     </linearGradient>
                                 </defs>
 
-                                {/* Background track */}
-                                <rect x={x} y={0} width={BAR_W} height={SVG_H} rx={8}
-                                    fill="rgba(255,255,255,0.04)" />
+                                <rect x={x} y={0} width={BAR_W} height={SVG_H} rx={12}
+                                    fill="rgba(255,255,255,0.02)" />
 
-                                {/* Actual bar (animated via motion requires foreignObject or workaround; use CSS instead) */}
-                                <rect x={x} y={y} width={BAR_W} height={barH || 2} rx={8}
+                                <motion.rect
+                                    initial={{ height: 0, y: SVG_H }}
+                                    animate={{ height: Math.max(barH, 4), y: Math.min(y, SVG_H - 4) }}
+                                    transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                                    x={x} width={BAR_W} rx={12}
                                     fill={fill}
-                                    style={{ transition: 'height 0.6s ease, y 0.6s ease' }}
+                                    style={{ filter: day.xp > 0 ? 'drop-shadow(0 0 8px var(--primary-glow))' : 'none' }}
                                 />
 
-                                {/* Today highlight ring */}
-                                {isToday && (
-                                    <rect x={x - 2} y={-2} width={BAR_W + 4} height={SVG_H + 4} rx={10}
-                                        fill="none" stroke="rgba(255,180,0,0.4)" strokeWidth={1.5} />
-                                )}
-
-                                {/* XP label on top */}
-                                {day.xp > 0 && (
-                                    <text x={x + BAR_W / 2} y={y - 6} textAnchor="middle"
-                                        fill={isToday ? '#ffb400' : '#00e5ff'}
-                                        fontSize={9} fontWeight={900}>
-                                        {day.xp}
-                                    </text>
-                                )}
-
-                                {/* Day label below */}
-                                <text x={x + BAR_W / 2} y={SVG_H + 18} textAnchor="middle"
-                                    fill={isToday ? '#ffb400' : 'rgba(255,255,255,0.5)'}
-                                    fontSize={10} fontWeight={isToday ? 900 : 600}>
+                                <text x={x + BAR_W / 2} y={SVG_H + 20} textAnchor="middle"
+                                    fill={isToday ? '#fff' : 'rgba(255,255,255,0.4)'}
+                                    fontSize={10} fontWeight={isToday ? 900 : 500} style={{ letterSpacing: '0.5px' }}>
                                     {day.label}
                                 </text>
                             </g>
@@ -141,34 +152,30 @@ function StatsPanel({ onExit, streak, userId }) {
                     })}
                 </svg>
 
-                {/* Best day callout */}
                 {bestDay && bestDay.xp > 0 && (
                     <div style={{
-                        marginTop: '20px', padding: '14px 18px', borderRadius: '14px',
-                        background: 'rgba(0,229,255,0.07)', border: '1px solid rgba(0,229,255,0.2)',
-                        display: 'flex', alignItems: 'center', gap: '12px'
+                        marginTop: '30px', padding: '15px', borderRadius: '16px',
+                        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)',
+                        display: 'flex', alignItems: 'center', gap: '15px'
                     }}>
-                        <span style={{ fontSize: '24px' }}>🏆</span>
+                        <div style={{ width: '40px', height: '40px', background: 'rgba(255,215,0,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👑</div>
                         <div>
-                            <div style={{ fontSize: '10px', opacity: 0.5, fontWeight: 900, letterSpacing: '1px', color: '#fff' }}>MEJOR DÍA</div>
-                            <div style={{ fontSize: '16px', fontWeight: 900, color: '#00e5ff' }}>{bestDay.label} — {bestDay.xp} XP</div>
+                            <div style={{ fontSize: '10px', opacity: 0.5, fontWeight: 900, letterSpacing: '1px' }}>RÉCORD SEMANAL</div>
+                            <div style={{ fontSize: '15px', fontWeight: 900 }}>{bestDay.xp} XP el {bestDay.label}</div>
                         </div>
                     </div>
                 )}
             </motion.div>
 
-            {/* Motivation tip */}
+            {/* Action Card */}
             <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
                 className="glass-card"
-                style={{ marginTop: '20px', padding: '20px', background: 'rgba(255,255,255,0.05)', textAlign: 'center' }}
+                style={{ marginTop: '20px', padding: '25px', background: 'var(--primary)', color: '#000', textAlign: 'center' }}
             >
-                <p style={{ margin: 0, fontSize: '15px', color: '#fff', fontWeight: 600, opacity: 0.8 }}>
-                    {activeDays >= 5
-                        ? '🚀 Semana increíble. ¡Eres imparable!'
-                        : activeDays >= 3
-                            ? '💪 Buen ritmo. ¡Empuja a 5 días esta semana!'
-                            : '🌱 Cada día cuenta. ¡Empieza hoy con 10 minutos!'}
+                <h3 style={{ margin: '0 0 5px 0', fontSize: '20px', fontWeight: 900 }}>¡SIGUE ASÍ!</h3>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, opacity: 0.8 }}>
+                    {activeDays >= 3 ? "Tu cerebro está creando nuevas conexiones neuronales." : "Empieza una sesión de 5 minutos para mantener la racha."}
                 </p>
             </motion.div>
 

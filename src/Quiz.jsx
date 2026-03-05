@@ -26,7 +26,8 @@ function Quiz({ words = [], language, onComplete, onCancel }) {
             return {
                 q: `¿Cómo se dice '${target.translation}' en ${language === 'de' ? 'Alemán' : 'Inglés'}?`,
                 a: options,
-                correct: correctIdx
+                correct: correctIdx,
+                targetWord: target.word
             };
         });
 
@@ -34,10 +35,22 @@ function Quiz({ words = [], language, onComplete, onCancel }) {
     }, [words, language]);
 
     const handleAnswer = (idx) => {
-        const isCorrect = idx === dynamicQuestions[qIndex].correct;
+        const question = dynamicQuestions[qIndex];
+        const isCorrect = idx === question.correct;
         const newScore = isCorrect ? score + 10 : score;
 
-        if (isCorrect) setScore(newScore);
+        if (isCorrect) {
+            setScore(newScore);
+        } else {
+            // Report missed word for SRS
+            if (onComplete) {
+                // Find the original word object from current words
+                const missed = words.find(w => w.word === question.targetWord);
+                if (missed && typeof window.onMissedWord === 'function') {
+                    window.onMissedWord(missed);
+                }
+            }
+        }
 
         if (qIndex < dynamicQuestions.length - 1) {
             setQIndex(qIndex + 1);

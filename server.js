@@ -17,7 +17,7 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -87,7 +87,7 @@ app.post('/api/chat', async (req, res) => {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const systemPrompt = `You are a professional language tutor for a student learning ${language === 'de' ? 'German' : 'English'} at level ${level}. 
         Your goal is to have a natural conversation, correct their mistakes gently, and provide translations if needed. 

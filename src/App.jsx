@@ -19,7 +19,15 @@ const pageVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
 };
 
-function ProfileView({ user, xp, streak, onExit, onChangeProfile, onChangeSettings }) {
+const ACHIEVEMENTS_LIST = [
+  { id: 'first_steps', title: 'Primeros Pasos', icon: '👣', desc: 'Gana tus primeros 50 XP', goal: 50, type: 'xp' },
+  { id: 'xp_master', title: 'Maestro de XP', icon: '⚡', desc: 'Llega a 300 XP totales', goal: 300, type: 'xp' },
+  { id: 'streak_3', title: 'Racha de Bronce', icon: '🔥', desc: 'Mantén una racha de 3 días', goal: 3, type: 'streak' },
+  { id: 'streak_7', title: 'Racha de Oro', icon: '🏆', desc: 'Mantén una racha de 7 días', goal: 7, type: 'streak' },
+  { id: 'chat_addict', title: 'Charlatán', icon: '💬', desc: 'Usa el Chat IA', goal: 1, type: 'chat' }
+];
+
+function ProfileView({ user, xp, streak, achievements = [], onExit, onChangeProfile, onChangeSettings }) {
   return (
     <>
       <div className="mesh-container">
@@ -57,10 +65,16 @@ function ProfileView({ user, xp, streak, onExit, onChangeProfile, onChangeSettin
 
         <div className="glass-card reveal" style={{ marginTop: '20px', padding: '20px' }}>
           <div style={{ fontSize: '14px', fontWeight: '800', marginBottom: '15px' }}>LOGROS OBTENIDOS</div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <div title="Flashcard Master" style={{ fontSize: '30px', opacity: 1 }}>🎖️</div>
-            <div title="Grammar King" style={{ fontSize: '30px', opacity: 1 }}>👑</div>
-            <div title="Early Bird" style={{ fontSize: '30px', opacity: 0.3 }}>🌅</div>
+          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+            {ACHIEVEMENTS_LIST.map(lib => {
+              const isUnlocked = achievements.includes(lib.id);
+              return (
+                <div key={lib.id} title={lib.desc} style={{ textAlign: 'center', opacity: isUnlocked ? 1 : 0.2, filter: isUnlocked ? 'none' : 'grayscale(1)', transition: '0.3s' }}>
+                  <div style={{ fontSize: '32px' }}>{lib.icon}</div>
+                  <div style={{ fontSize: '10px', fontWeight: '900', marginTop: '5px' }}>{lib.title}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -306,6 +320,15 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [achievements, setAchievements] = useState(() => {
+    const saved = localStorage.getItem(uKey + 'achievements');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [notification, setNotification] = useState(null);
+  const [missedWords, setMissedWords] = useState(() => {
+    const saved = localStorage.getItem(uKey + 'missedWords');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [customTopics, setCustomTopics] = useState(() => {
     const saved = localStorage.getItem(uKey + 'customTopics');
     return saved ? JSON.parse(saved) : [];
@@ -327,16 +350,61 @@ function App() {
     localStorage.setItem(uKey + 'level', level);
     localStorage.setItem('view', view);
     localStorage.setItem(uKey + 'selectedWords', JSON.stringify(selectedWords));
-  }, [users, activeUserId, uKey, customTopics, xp, streak, language, level, view, selectedWords]);
+    localStorage.setItem(uKey + 'achievements', JSON.stringify(achievements));
+    localStorage.setItem(uKey + 'missedWords', JSON.stringify(missedWords));
+  }, [users, activeUserId, uKey, customTopics, xp, streak, language, level, view, selectedWords, achievements, missedWords]);
+
+  useEffect(() => {
+    window.onMissedWord = (word) => {
+      setMissedWords(prev => {
+        if (prev.find(w => w.word === word.word)) return prev;
+        return [...prev, word];
+      });
+    };
+    return () => delete window.onMissedWord;
+  }, []);
 
   const addXP = (earned) => {
-    setXp(prev => Math.min(prev + earned, 500));
+    const newXP = Math.min(xp + earned, 1000000); // XP ya no tiene límite bajo
+    setXp(newXP);
+
+    // Verificar logros de XP
+    ACHIEVEMENTS_LIST.forEach(lib => {
+      if (lib.type === 'xp' && newXP >= lib.goal && !achievements.includes(lib.id)) {
+        unlockAchievement(lib);
+      }
+    });
+
     const today = new Date().toISOString().slice(0, 10);
     const dailyXPKey = uKey + 'dailyXP';
     const dailyXP = JSON.parse(localStorage.getItem(dailyXPKey) || '{}');
     dailyXP[today] = (dailyXP[today] || 0) + earned;
     localStorage.setItem(dailyXPKey, JSON.stringify(dailyXP));
   };
+
+  const unlockAchievement = (ach) => {
+    if (achievements.includes(ach.id)) return;
+    setAchievements(prev => [...prev, ach.id]);
+    setNotification(ach);
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  useEffect(() => {
+    // Verificar logros de racha
+    ACHIEVEMENTS_LIST.forEach(lib => {
+      if (lib.type === 'streak' && streak >= lib.goal && !achievements.includes(lib.id)) {
+        unlockAchievement(lib);
+      }
+    });
+  }, [streak, achievements]);
+
+  useEffect(() => {
+    if (view === 'chat' && !achievements.includes('chat_addict')) {
+      const ach = ACHIEVEMENTS_LIST.find(a => a.id === 'chat_addict');
+      if (ach) unlockAchievement(ach);
+    }
+  }, [view, achievements]);
+
   const startTopic = (topic) => { setSelectedWords(topic.words); setView('flashcards'); };
   const startMatchGame = (topic) => { setSelectedWords(topic.words); setView('match'); };
   const startFillBlank = (topic) => { setSelectedWords(topic.words); setView('fillblank'); };
@@ -477,6 +545,17 @@ function App() {
             <TabBar activeView={view} setView={setView} />
           </div>
         );
+      case 'repaso':
+        return (
+          <div style={{ position: 'relative' }}>
+            <Flashcards words={missedWords} language={language} onExit={() => {
+              // Limpiar palabras repasadas (opcional, o mantener algunas)
+              setMissedWords([]);
+              setView('dashboard');
+            }} />
+            <TabBar activeView={view} setView={setView} />
+          </div>
+        );
       case 'flashcards': return <Flashcards key="flash" words={selectedWords} language={language} onExit={() => setView('dashboard')} />;
       case 'match': return <WordMatchGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
       case 'fillblank': return <FillBlankGame words={selectedWords} language={language} onExit={() => setView('dashboard')} onAddXP={addXP} />;
@@ -532,17 +611,47 @@ function App() {
 
         return (
           <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
+            <AnimatePresence>
+              {notification && (
+                <motion.div
+                  initial={{ opacity: 0, y: -100 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  style={{ position: 'fixed', top: '20px', left: '50%', x: '-50%', zIndex: 20000, pointerEvents: 'none' }}
+                >
+                  <div className="glass-card" style={{ background: 'rgba(0,0,0,0.8)', border: '2px solid var(--primary)', padding: '15px 30px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                    <div style={{ fontSize: '40px' }}>{notification.icon}</div>
+                    <div>
+                      <div style={{ color: 'var(--primary)', fontWeight: '900', fontSize: '12px' }}>NUEVO LOGRO</div>
+                      <div style={{ fontWeight: '900', fontSize: '18px' }}>{notification.title}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
             <div className="dashboard-container">
               <header className="header">
-                <h1 className="user-name">{activeUser.name}</h1>
-                <div className="badge-pill" style={{ background: 'rgba(0, 242, 255, 0.15)', color: '#00f2ff' }}>{level} • {currentFlag}</div>
+                <h1 className="user-name">Dashboard</h1>
+                <div className="badge-pill" style={{ background: 'var(--primary)', color: '#000' }}>🔥 {streak} DÍAS</div>
               </header>
 
-              <motion.div whileHover={{ scale: 1.05 }} className="streak-pill" style={{ background: 'rgba(255, 255, 255, 0.08)' }}>
-                <span style={{ fontSize: '24px' }}>🔥</span>
-                <span style={{ fontWeight: '800', fontSize: '18px', color: '#fff' }}>{streak} DÍAS DE RACHA</span>
-              </motion.div>
+              {missedWords.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="glass-card"
+                  style={{ marginBottom: '25px', padding: '25px', background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,0,0,0.05))', border: '1px solid rgba(255,0,0,0.2)' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ color: '#ff4b4b', fontWeight: '900', fontSize: '11px', letterSpacing: '2px', marginBottom: '5px' }}>REPASO URGENTE</div>
+                      <div style={{ fontSize: '20px', fontWeight: '900' }}>Tienes {missedWords.length} palabras falladas</div>
+                    </div>
+                    <button onClick={() => setView('repaso')} className="premium-btn" style={{ margin: 0, width: 'auto', padding: '10px 20px', background: '#ff4b4b', color: '#fff' }}>ESTUDIAR YA</button>
+                  </div>
+                </motion.div>
+              )}
 
               <motion.section whileHover={{ y: -5 }} className="glass-card masterclass-hero" onClick={() => setView('grammar-summary')} style={{ background: 'rgba(255,255,255,0.08)', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

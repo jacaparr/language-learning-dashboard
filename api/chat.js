@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const systemPrompt = `You are a professional language tutor for a student learning ${language === 'de' ? 'German' : 'English'} at level ${level}. 
     Your goal is to have a natural conversation, correct their mistakes gently, and provide translations if needed. 
