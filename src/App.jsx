@@ -239,11 +239,13 @@ function WelcomeScreen({ onStart }) {
 }
 function SuggestModal({ onCancel, onSuggest }) {
   const [text, setText] = useState('');
+  const [mode, setMode] = useState('ia'); // 'ia' or 'local'
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(30px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div className="glass-card reveal" style={{ width: '100%', maxWidth: '400px', padding: '30px', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(20,20,20,0.7)', boxShadow: '0 50px 100px rgba(0,0,0,0.8)' }}>
         <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: '900' }}>Proponer nuevo tema</h2>
-        <p style={{ opacity: 0.7, fontSize: '14px', marginBottom: '20px' }}>¿Qué te gustaría aprender? Generaremos el contenido con IA.</p>
+        <p style={{ opacity: 0.7, fontSize: '14px', marginBottom: '20px' }}>¿Qué te gustaría aprender? Generaremos el contenido al instante.</p>
+        
         <input
           autoFocus
           className="search-input"
@@ -252,9 +254,49 @@ function SuggestModal({ onCancel, onSuggest }) {
           onChange={(e) => setText(e.target.value)}
           style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
         />
+
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
+          <button 
+            type="button"
+            onClick={() => setMode('ia')} 
+            className="glass-card" 
+            style={{ 
+              flex: 1, 
+              padding: '12px 6px', 
+              fontSize: '12px', 
+              margin: 0, 
+              border: mode === 'ia' ? '2px solid #00e5ff' : '1px solid rgba(255,255,255,0.15)',
+              background: mode === 'ia' ? 'rgba(0,229,255,0.15)' : 'transparent',
+              color: '#fff',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            🤖 Generar con IA
+          </button>
+          <button 
+            type="button"
+            onClick={() => setMode('local')} 
+            className="glass-card" 
+            style={{ 
+              flex: 1, 
+              padding: '12px 6px', 
+              fontSize: '12px', 
+              margin: 0, 
+              border: mode === 'local' ? '2px solid #b056e0' : '1px solid rgba(255,255,255,0.15)',
+              background: mode === 'local' ? 'rgba(176,86,224,0.15)' : 'transparent',
+              color: '#fff',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            ⚡ Local Rápido
+          </button>
+        </div>
+
         <div style={{ display: 'flex', gap: '15px' }}>
-          <button onClick={onCancel} className="glass-card" style={{ flex: 1, padding: '15px', margin: 0, fontSize: '14px' }}>CANCELAR</button>
-          <button onClick={() => onSuggest(text)} className="premium-btn" style={{ flex: 1, padding: '15px', fontSize: '14px' }}>ENVIAR</button>
+          <button onClick={onCancel} className="glass-card" style={{ flex: 1, padding: '15px', margin: 0, fontSize: '14px', cursor: 'pointer' }}>CANCELAR</button>
+          <button onClick={() => onSuggest(text, mode === 'local')} className="premium-btn" style={{ flex: 1, padding: '15px', fontSize: '14px', cursor: 'pointer' }}>ENVIAR</button>
         </div>
       </div>
     </div>
@@ -418,37 +460,52 @@ function App() {
     setView('dashboard');
   };
 
-  const handleSuggest = async (topicName) => {
+  const handleSuggest = async (topicName, forceLocal = false) => {
     if (!topicName) return;
     setIsSuggesting(false);
     setGeneratingTopicName(topicName);
     setView('generating');
 
     let data;
-    try {
-      const resp = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: topicName,
-          language: language,
-          level: level
-        })
-      });
-
-      if (!resp.ok) {
-        console.warn("Backend API returned non-OK status. Activating smart frontend fallback generator.");
-        data = getFallbackVocabulary(topicName, language, level);
-      } else {
-        data = await resp.json();
-      }
-    } catch (error) {
-      console.warn("Backend API fetch failed. Activating robust frontend fallback generator.", error);
+    if (forceLocal) {
+      console.log("Force Local active. Generating content immediately without backend fetch.");
       data = getFallbackVocabulary(topicName, language, level);
+    } else {
+      try {
+        const resp = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: topicName,
+            language: language,
+            level: level
+          })
+        });
+
+        if (!resp.ok) {
+          console.warn("Backend API returned non-OK status. Activating smart frontend fallback generator.");
+          data = getFallbackVocabulary(topicName, language, level);
+        } else {
+          data = await resp.json();
+          // Verify if data is a valid array and doesn't contain an error payload
+          if (!Array.isArray(data) || (data && data.error)) {
+            console.warn("Backend API returned invalid response or error payload. Activating smart frontend fallback generator.", data);
+            data = getFallbackVocabulary(topicName, language, level);
+          }
+        }
+      } catch (error) {
+        console.warn("Backend API fetch failed. Activating robust frontend fallback generator.", error);
+        data = getFallbackVocabulary(topicName, language, level);
+      }
     }
 
     try {
       console.log('Datos a procesar:', data);
+
+      if (!Array.isArray(data)) {
+        console.error("Data is still not an array after fallback. Creating automatic procedural vocabulary.");
+        data = getFallbackVocabulary(topicName, language, level);
+      }
 
       // Sanitización profunda para evitar "term 1", "trimestre 1", "1.", etc.
       const sanitizedWords = data.map(item => {
@@ -640,7 +697,10 @@ function App() {
             <div className="mesh-container"><div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div></div>
             <div className="dashboard-container">
               <header className="header">
-                <h1 className="user-name">Dashboard</h1>
+                <div>
+                  <h1 className="user-name" style={{ display: 'inline-block', margin: 0 }}>Dashboard</h1>
+                  <span style={{ fontSize: '10px', opacity: 0.45, marginLeft: '12px', verticalAlign: 'middle', background: 'rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', fontWeight: '800', letterSpacing: '0.5px', color: '#00f2ff' }}>v1.2.0 - Local Fallback OK</span>
+                </div>
                 <div className="badge-pill" style={{ background: 'var(--primary)', color: '#000' }}>🔥 {streak} DÍAS</div>
               </header>
 
