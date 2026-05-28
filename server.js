@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getFallbackVocabulary } from "./api/fallbackCatalog.js";
+
 
 dotenv.config();
 
@@ -68,12 +70,18 @@ app.post('/api/generate', async (req, res) => {
         const words = JSON.parse(text);
         res.json(words);
     } catch (error) {
-        console.error("AI Generation failed:", error);
-        res.status(500).json({
-            error: "Error de IA",
-            details: error.message || "Unknown error",
-            fullError: error.toString()
-        });
+        console.warn("AI Generation failed. Using robust fallback catalog.", error.message);
+        try {
+            const fallbackWords = getFallbackVocabulary(topic, language, level);
+            res.json(fallbackWords);
+        } catch (fallbackError) {
+            console.error("Fallback failed:", fallbackError);
+            res.status(500).json({
+                error: "Error de IA",
+                details: error.message || "Unknown error",
+                fullError: error.toString()
+            });
+        }
     }
 });
 
