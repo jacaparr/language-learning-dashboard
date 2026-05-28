@@ -11,6 +11,8 @@ import FillBlankGame from './FillBlankGame';
 import StatsPanel from './StatsPanel';
 import AIChat from './AIChat';
 import { languages, levels, defaultContent } from './content';
+import { getFallbackVocabulary } from './fallbackCatalog';
+
 
 // Variantes de animación profesional
 const pageVariants = {
@@ -422,6 +424,7 @@ function App() {
     setGeneratingTopicName(topicName);
     setView('generating');
 
+    let data;
     try {
       const resp = await fetch('/api/generate', {
         method: 'POST',
@@ -434,13 +437,18 @@ function App() {
       });
 
       if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}));
-        const fullMsg = errorData.details ? `${errorData.error}: ${errorData.details}` : (errorData.error || 'Error al generar contenido');
-        throw new Error(fullMsg);
+        console.warn("Backend API returned non-OK status. Activating smart frontend fallback generator.");
+        data = getFallbackVocabulary(topicName, language, level);
+      } else {
+        data = await resp.json();
       }
+    } catch (error) {
+      console.warn("Backend API fetch failed. Activating robust frontend fallback generator.", error);
+      data = getFallbackVocabulary(topicName, language, level);
+    }
 
-      const data = await resp.json();
-      console.log('Datos recibidos de IA:', data);
+    try {
+      console.log('Datos a procesar:', data);
 
       // Sanitización profunda para evitar "term 1", "trimestre 1", "1.", etc.
       const sanitizedWords = data.map(item => {
