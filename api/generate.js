@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getFallbackVocabulary } from "./fallbackCatalog.js";
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -61,14 +63,14 @@ export default async function handler(req, res) {
     const words = JSON.parse(text);
     res.status(200).json(words);
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    // Enviar el mensaje de error real para depuración
-    const errorMessage = error.message || 'Unknown error';
-    res.status(500).json({
-      error: 'Error de IA',
-      details: errorMessage,
-      isSafety: errorMessage.includes('safety') || errorMessage.includes('candidate'),
-      fullError: error.toString()
-    });
+    console.warn("Gemini API call failed. Falling back to robust catalog generator.", error.message);
+    try {
+      const fallbackWords = getFallbackVocabulary(topic, language, level);
+      console.log("Successfully generated fallback words for topic:", topic);
+      res.status(200).json(fallbackWords);
+    } catch (fallbackError) {
+      console.error("Fallback generator also failed:", fallbackError);
+      res.status(500).json({ error: 'Failed to generate content', details: fallbackError.message });
+    }
   }
 }
