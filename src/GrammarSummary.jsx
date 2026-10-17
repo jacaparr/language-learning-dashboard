@@ -1,12 +1,5 @@
 import React from 'react';
-
-const speak = (text, langCode) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = langCode === 'en' ? 'en-US' : 'de-DE';
-    utterance.rate = 0.85;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-};
+import { speak } from './speechHelper';
 
 
 // ... grammarContent (keeping content, updating visuals)

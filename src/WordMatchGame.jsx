@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { speak as speakHelper } from './speechHelper';
 
 function WordMatchGame({ words, language = 'en', onExit, onAddXP }) {
     const [cards, setCards] = useState([]);
@@ -7,13 +8,7 @@ function WordMatchGame({ words, language = 'en', onExit, onAddXP }) {
     const [matched, setMatched] = useState([]);
     const [gameStatus, setGameStatus] = useState('playing'); // playing, won
 
-    const speak = (text) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language === 'en' ? 'en-US' : 'de-DE';
-        utterance.rate = 0.85;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-    };
+    const speak = (text) => speakHelper(text, language);
 
     useEffect(() => {
         // Prepare game: shuffle and double the cards (word and translation)

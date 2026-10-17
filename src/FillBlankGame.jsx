@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { speak as speakHelper } from './speechHelper';
 
 // Utility: replace first occurrence of the target word in a sentence with blanks
 function createBlank(example, word) {
@@ -55,13 +56,7 @@ function FillBlankGame({ words, language, onExit, onAddXP }) {
         if (inputMode && inputRef.current) inputRef.current.focus();
     }, [inputMode, index]);
 
-    const speak = (text) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language === 'en' ? 'en-US' : 'de-DE';
-        utterance.rate = 0.85;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-    };
+    const speak = (text) => speakHelper(text, language);
 
     const handleAnswer = (choice) => {
         if (selected !== null) return;

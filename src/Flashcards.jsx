@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { speak } from './speechHelper';
 
 function Flashcards({ words = [], language, onExit }) {
     const [index, setIndex] = useState(0);
@@ -6,12 +7,6 @@ function Flashcards({ words = [], language, onExit }) {
 
     const [isListening, setIsListening] = useState(false);
     const [feedback, setFeedback] = useState(null);
-
-    const speak = (text, langCode) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode === 'en' ? 'en-US' : 'de-DE';
-        window.speechSynthesis.speak(utterance);
-    };
 
     const listen = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
